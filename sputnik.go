@@ -18,14 +18,25 @@ func (sp *sputnik) finish() {
 }
 
 func (sp *sputnik) serverConnected(connection any, logger any) {
-	return
+	for _, abl := range sp.abs[1:] {
+		if abl.cbc != nil {
+			abl.cbc.ServerConnected(connection, logger)
+			continue
+		}
+	}
 }
 
 func (sp *sputnik) serverDisConnected(connection any) {
-	return
+
+	for _, abl := range sp.abs[1:] {
+		if abl.cbc != nil {
+			abl.cbc.ServerDisconnected(connection)
+			continue
+		}
+	}
 }
 
-func (sp *sputnik) eventReceived(ev Event) {
+func (sp *sputnik) eventReceived(msg Msg) {
 	return
 }
 
@@ -85,7 +96,7 @@ func (sp *sputnik) factory() Block {
 
 		OnConnect:    sp.serverConnected,
 		OnDisconnect: sp.serverDisConnected,
-		OnEvent:      sp.eventReceived,
+		OnMsg:        sp.eventReceived,
 	}
 }
 

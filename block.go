@@ -17,7 +17,7 @@ type BlockDescriptor struct {
 
 // Block has set of the callbacks:
 //   - mandatory:	Init|Run|Finish
-//   - optional:	OnServerConnect|OnServerDisconnect|OnEvent
+//   - optional:	OnServerConnect|OnServerDisconnect|OnMsg
 //
 // Init callback is executed by sputnik once during initialization.
 // Blocks are initialized in sequenced order according to configuration.
@@ -46,25 +46,26 @@ type OnServerConnect func(connection any, logger any)
 // connected server disconnects.
 type OnServerDisconnect func(connection any)
 
-// Because asynchronous nature of blocks, negotiation between blocks done using 'events'
-// Developers of blocks should agree on content of events.
-// sputnik doesn't force specific format of the event
+// Because asynchronous nature of blocks, negotiation between blocks done using 'messages'
+// Message may be command|query|event|update|...
+// Developers of blocks should agree on content of messages.
+// sputnik doesn't force specific format of the message
 // with one exception: key of the map should not start from "__".
 // This prefix is used by sputnik for house-keeping values.
-// You can call Notify with nil event, but on the side of the receiver it may be not nil,
+// You can call Send with nil message, but on the side of the receiver it may be not nil,
 // because data added by sputnik
-type Event map[string]any
+type Msg map[string]any
 
-// Optional OnEvent callback is executed by sputnik as result of receiving Event.
+// Optional OnMsg callback is executed by sputnik as result of receiving Msg.
 // Block can send event to itself.
-// Unlike other callbacks, OnEvent called sequentially one by one from the same goroutine.
-type OnEvent func(ev Event)
+// Unlike other callbacks, OnMsg called sequentially one by one from the same goroutine.
+type OnMsg func(msg Msg)
 
 // Simplified Block life cycle:
 //   - Init
 //   - Run
 //   - OnServerConnect
-//   - [*]OnEvent
+//   - [*]OnMsg
 //   - OnServerDisconnect
 //   - Finish
 //
@@ -75,7 +76,7 @@ type Block struct {
 	Finish       Finish
 	OnConnect    OnServerConnect
 	OnDisconnect OnServerDisconnect
-	OnEvent      OnEvent
+	OnMsg        OnMsg
 }
 
 // Check presence of mandatory callbacks
@@ -96,9 +97,9 @@ type BlockController interface {
 	// Identification of controlled block
 	Descriptor() BlockDescriptor
 
-	// Asynchronously send event to controlled block
-	// true is returned if controlled block has OnEvent callback
-	Notify(ev Event) bool
+	// Asynchronously send message to controlled block
+	// true is returned if controlled block has OnMsg callback
+	Send(msg Msg) bool
 
 	// Asynchronously notify controlled block about server status
 	// true is returned if controlled block has OnServerConnect callback

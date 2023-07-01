@@ -68,16 +68,16 @@ func (db *dumbBlock) run(bc sputnik.BlockController) {
 	}
 }
 
-func (db *dumbBlock) eventReceived(ev sputnik.Event) {
-	ev = nil
+func (db *dumbBlock) eventReceived(msg sputnik.Msg) {
+	msg = nil
 }
 
 func dbFact() sputnik.Block {
 	db := new(dumbBlock)
 	return sputnik.Block{
-		Init:    db.init,
-		Finish:  db.finish,
-		Run:     db.run,
-		OnEvent: db.eventReceived,
+		Init:   db.init,
+		Finish: db.finish,
+		Run:    db.run,
+		OnMsg:  db.eventReceived,
 	}
 }

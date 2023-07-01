@@ -1,4 +1,4 @@
-// Package sputnik simplifies creation of satellite  processes for servers.
+// Package sputnik simplifies creation of satellite/sidecar  processes for servers.
 //
 // # Modular monolith
 //
