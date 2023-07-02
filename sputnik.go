@@ -113,10 +113,6 @@ func (sp *sputnik) activeinitiator() *activeBlock {
 
 func (sp *sputnik) addControllers() {
 	for _, abl := range sp.abs {
-		cn := new(controller)
-		cn.bd = abl.bd
-		cn.bl = abl.bl
-		cn.abs = sp.abs
-		abl.bc = cn
+		attachController(abl, sp.abs)
 	}
 }

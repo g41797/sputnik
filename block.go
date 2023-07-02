@@ -96,11 +96,13 @@ type BlockController interface {
 	Descriptor() BlockDescriptor
 
 	// Asynchronously send message to controlled block
-	// true is returned if controlled block has OnMsg callback
+	// true is returned if
+	//  - controlled block has OnMsg callback
+	//  - recipient of messages was not cancelled
 	Send(msg Msg) bool
 
 	// Asynchronously notify controlled block about server status
-	// true is returned if controlled block has OnServerConnect callback
+	// true is returned if if controlled block has OnServerConnect callback
 	ServerConnected(sc any, lp any) bool
 
 	// Asynchronously notify controlled block about server status

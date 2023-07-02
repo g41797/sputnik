@@ -6,6 +6,16 @@ type controller struct {
 	bd  BlockDescriptor
 	bl  Block
 	abs activeBlocks
+	mpr *msgProcessor
+}
+
+func attachController(abl *activeBlock, abs activeBlocks) {
+	cn := new(controller)
+	cn.bd = abl.bd
+	cn.bl = abl.bl
+	cn.mpr = newMsgProcessor(cn.bl.OnMsg)
+	cn.abs = abs
+	abl.bc = cn
 }
 
 func (cn *controller) Controller(resp string) (bc BlockController, exists bool) {
@@ -28,10 +38,7 @@ func (cn *controller) Send(msg Msg) bool {
 		return false
 	}
 
-	//TODO replace with kissngoqueue
-	go cn.bl.OnMsg(msg)
-
-	return true
+	return cn.mpr.submit(msg)
 }
 
 func (cn *controller) ServerConnected(sc any, lp any) bool {
