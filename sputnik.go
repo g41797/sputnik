@@ -5,6 +5,18 @@ type sputnik struct {
 	abs activeBlocks
 }
 
+func (sp *sputnik) factory() Block {
+	return Block{
+		Init:   sp.init,
+		Run:    sp.run,
+		Finish: sp.finish,
+
+		OnConnect:    sp.serverConnected,
+		OnDisconnect: sp.serverDisConnected,
+		OnMsg:        sp.msgReceived,
+	}
+}
+
 func (sp *sputnik) init(cnf any) error {
 	return nil
 }
@@ -19,8 +31,8 @@ func (sp *sputnik) finish() {
 
 func (sp *sputnik) serverConnected(connection any, logger any) {
 	for _, abl := range sp.abs[1:] {
-		if abl.cbc != nil {
-			abl.cbc.ServerConnected(connection, logger)
+		if abl.bc != nil {
+			abl.bc.ServerConnected(connection, logger)
 			continue
 		}
 	}
@@ -29,14 +41,14 @@ func (sp *sputnik) serverConnected(connection any, logger any) {
 func (sp *sputnik) serverDisConnected(connection any) {
 
 	for _, abl := range sp.abs[1:] {
-		if abl.cbc != nil {
-			abl.cbc.ServerDisconnected(connection)
+		if abl.bc != nil {
+			abl.bc.ServerDisconnected(connection)
 			continue
 		}
 	}
 }
 
-func (sp *sputnik) eventReceived(msg Msg) {
+func (sp *sputnik) msgReceived(msg Msg) {
 	return
 }
 
@@ -57,50 +69,54 @@ func (sp *sputnik) initInternal() error {
 		ibs = append(ibs, abl)
 	}
 
-	if err == nil {
-		sp.abs = make(activeBlocks, 0)
-		sp.abs = append(sp.abs, sp.activeinitiator())
-		sp.abs = append(sp.abs, ibs...)
+	if err != nil {
+		for i := len(ibs) - 1; i >= 0; i-- {
+			ibs[i].finish()
+		}
 
-		// TODO add block controllers !!!
-
-		return nil
+		return err
 	}
 
-	for i := len(ibs) - 1; i >= 0; i-- {
-		ibs[i].finish()
-	}
+	sp.abs = make(activeBlocks, 0)
+	sp.abs = append(sp.abs, sp.activeinitiator())
+	sp.abs = append(sp.abs, ibs...)
 
-	return err
+	sp.addControllers()
+
+	return nil
 }
 
 func (sp *sputnik) runInternal() (err error) {
 
-	for {
-
-		break
+	for _, abl := range sp.abs {
+		go func(fr Run, bc BlockController) {
+			fr(bc)
+		}(abl.bl.Run, abl.bc)
 	}
 
-	return
+	return nil
 }
 
 func (sp *sputnik) finishInternal() {
 	return
 }
 
-func (sp *sputnik) factory() Block {
-	return Block{
-		Init:   sp.init,
-		Run:    sp.run,
-		Finish: sp.finish,
-
-		OnConnect:    sp.serverConnected,
-		OnDisconnect: sp.serverDisConnected,
-		OnMsg:        sp.eventReceived,
-	}
+func (sp *sputnik) abort() {
+	return
 }
 
-func (sp *sputnik) activeinitiator() activeBlock {
-	return newActiveBlock(
+func (sp *sputnik) activeinitiator() *activeBlock {
+	ibl := newActiveBlock(
 		BlockDescriptor{InitiatorResponsibility, InitiatorResponsibility}, sp.factory())
+	return &ibl
+}
+
+func (sp *sputnik) addControllers() {
+	for _, abl := range sp.abs {
+		cn := new(controller)
+		cn.bd = abl.bd
+		cn.bl = abl.bl
+		cn.abs = sp.abs
+		abl.bc = cn
+	}
 }

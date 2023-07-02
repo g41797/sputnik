@@ -1,7 +1,5 @@
 package sputnik
 
-import "fmt"
-
 // Block has Name (analog of golang type) and Responsibility (instance of specific block)
 // This separation allows to run simultaneously blocks with the same Name.
 // Other possibility - blocks with different name but with the same responsibility,
@@ -112,46 +110,4 @@ type BlockController interface {
 	// Asynchronously call Finish callback of controlled block
 	//
 	Finish()
-}
-
-type cloneableBlockController interface {
-	BlockController
-	Clone() cloneableBlockController
-}
-
-type activeBlock struct {
-	bd  BlockDescriptor
-	bl  Block
-	cbc cloneableBlockController
-}
-
-func (abl *activeBlock) init(cnf any) error {
-	err := abl.bl.Init(cnf)
-
-	if err != nil {
-		err = fmt.Errorf("Init of [%s,%s] failed with error %s", abl.bd.Name, abl.bd.Responsibility, err.Error())
-	}
-
-	return err
-}
-
-func (abl *activeBlock) finish() {
-	// For interception
-	abl.bl.Finish()
-}
-
-func newActiveBlock(bd BlockDescriptor, bl Block) activeBlock {
-	return activeBlock{bd, bl, nil}
-}
-
-type activeBlocks []activeBlock
-
-func (abs activeBlocks) getABl(resp string) *activeBlock {
-	var res *activeBlock
-	for _, ab := range abs {
-		if ab.bd.Responsibility == resp {
-			return &ab
-		}
-	}
-	return res
 }

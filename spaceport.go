@@ -60,7 +60,7 @@ func Prepare(spp SpacePort) (lfn Launch, st ShootDown, err error) {
 		return nil, nil, err
 	}
 
-	return sp.runInternal, sp.finishInternal, nil
+	return sp.runInternal, sp.abort, nil
 }
 
 func (spr *SpacePort) createActiveBlocks() (activeBlocks, error) {
@@ -76,7 +76,7 @@ func (spr *SpacePort) createActiveBlocks() (activeBlocks, error) {
 		if err != nil {
 			return nil, err
 		}
-		abls = append(abls, *abl)
+		abls = append(abls, abl)
 	}
 
 	return abls, nil
