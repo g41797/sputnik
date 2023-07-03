@@ -30,11 +30,12 @@ type Init func(conf any) error
 // via BlockController
 type Run func(self BlockController)
 
-// Finish callback is executed by sputnik once during shutdown of the process.
-// Blocks are finished in reverse order.
+// Finish callback is executed by sputnik:
+//   - during initialization  of the process if init of another block failed (init == true)
+//   - during shutdown of the process (init == false)
 //
-// For tests sputnik supports possibility to run Init/Finish blocks per test.
-type Finish func()
+// Blocks are finished in reverse of initialization order.
+type Finish func(init bool)
 
 // Optional OnServerConnect callback is executed by sputnik after successful
 // connection to server.

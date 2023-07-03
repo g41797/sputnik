@@ -56,7 +56,7 @@ func (db *dumbBlock) init(cnf any) error {
 	return nil
 }
 
-func (db *dumbBlock) finish() {
+func (db *dumbBlock) finish(init bool) {
 	close(db.done)
 	return
 }

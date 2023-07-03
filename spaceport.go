@@ -54,7 +54,7 @@ func Prepare(spp SpacePort) (lfn Launch, st ShootDown, err error) {
 
 	sp.spp = spp
 
-	err = sp.initInternal()
+	err = sp.init(nil)
 
 	if err != nil {
 		return nil, nil, err

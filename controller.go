@@ -62,5 +62,15 @@ func (cn *controller) ServerDisconnected(sc any) bool {
 }
 
 func (cn *controller) Finish() {
-	go cn.bl.Finish()
+
+	icn := cn.abs[0].bc
+
+	fm := make(Msg)
+	fm["__name"] = finishedMsg
+	fm["__resp"] = cn.bd.Responsibility
+
+	go func(fn Finish, bc BlockController, m Msg) {
+		fn(false)
+		icn.Send(fm)
+	}(cn.bl.Finish, icn, fm)
 }

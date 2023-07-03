@@ -20,7 +20,7 @@ func (abl *activeBlock) init(cnf any) error {
 
 func (abl *activeBlock) finish() {
 	// For interception
-	abl.bl.Finish()
+	abl.bl.Finish(true)
 }
 
 func newActiveBlock(bd BlockDescriptor, bl Block) activeBlock {

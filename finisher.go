@@ -61,9 +61,10 @@ func (bl *finisher) run(self BlockController) {
 	}
 }
 
-func (bl *finisher) finish() {
+func (bl *finisher) finish(init bool) {
+	if init {
+		return
+	}
 	close(bl.done)
 	return
 }
-
-// TODO: check context usage + signal.NotifyContext ...

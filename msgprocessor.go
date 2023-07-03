@@ -6,6 +6,8 @@ import (
 	"github.com/g41797/kissngoqueue"
 )
 
+// Helper of controller. All messages send to block
+// are processed using queue on the same goroutine.
 type msgProcessor struct {
 	fnc  OnMsg
 	q    *kissngoqueue.Queue[Msg]
