@@ -21,6 +21,8 @@ func init() {
 				Init:   finisher.init,
 				Run:    finisher.run,
 				Finish: finisher.finish,
+
+				OnMsg: finisher.debug,
 			}
 			return block
 		})
@@ -52,12 +54,8 @@ func (bl *finisher) run(self BlockController) {
 		return
 
 	case <-bl.term:
-		if bl.bc != nil {
-			ibc, ok := bl.bc.Controller(InitiatorResponsibility)
-			if ok {
-				ibc.Finish()
-			}
-		}
+		ibc, _ := bl.bc.Controller(InitiatorResponsibility)
+		ibc.Finish()
 	}
 }
 
@@ -67,4 +65,10 @@ func (bl *finisher) finish(init bool) {
 	}
 	close(bl.done)
 	return
+}
+
+// Any received message interpreted as SIGQUIT
+// Used for testing.
+func (bl *finisher) debug(msg Msg) {
+	bl.term <- syscall.SIGQUIT
 }

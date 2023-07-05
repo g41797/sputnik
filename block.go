@@ -5,7 +5,7 @@ package sputnik
 // Other possibility - blocks with different name but with the same responsibility,
 // e.g. different implementation of "finisher" depends on environment.
 //
-// initiator block has predetermined Responsibility
+// initiator block has predetermined Responsibility - "initiator"
 const InitiatorResponsibility = "initiator"
 
 type BlockDescriptor struct {

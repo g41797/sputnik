@@ -1,12 +1,21 @@
 package sputnik
 
-import "github.com/g41797/kissngoqueue"
+import (
+	"sync"
+
+	"github.com/g41797/kissngoqueue"
+)
 
 type sputnik struct {
-	spp      SpacePort
-	abs      activeBlocks
-	q        *kissngoqueue.Queue[Msg]
-	finished int
+	lock          sync.Mutex
+	spp           SpacePort
+	abs           activeBlocks
+	q             *kissngoqueue.Queue[Msg]
+	runStarted    bool
+	abortStarted  bool
+	finishStarted bool
+	finishedBlks  int
+	done          chan struct{}
 }
 
 // sputnik has functionality of "initiator" block:
@@ -25,7 +34,6 @@ func (sp *sputnik) factory() Block {
 }
 
 // Callback of "initiator" block
-
 func (sp *sputnik) init(_ any) error {
 
 	appBlks, err := sp.spp.createActiveBlocks()
@@ -64,11 +72,8 @@ func (sp *sputnik) init(_ any) error {
 
 func (sp *sputnik) run(_ BlockController) {
 
-	// Start active blacks on own goroutines
-	for _, abl := range sp.abs[1:] {
-		go func(fr Run, bc BlockController) {
-			fr(bc)
-		}(abl.bl.Run, abl.bc)
+	if !sp.activate() {
+		return
 	}
 
 	// Main loop
@@ -86,6 +91,28 @@ func (sp *sputnik) run(_ BlockController) {
 	return
 }
 
+func (sp *sputnik) activate() bool {
+	sp.lock.Lock()
+	defer sp.lock.Unlock()
+
+	if sp.abortStarted {
+		return false
+	}
+
+	sp.done = make(chan struct{})
+	defer close(sp.done)
+
+	// Start active blacks on own goroutines
+	for _, abl := range sp.abs[1:] {
+		go func(fr Run, bc BlockController) {
+			fr(bc)
+		}(abl.bl.Run, abl.bc)
+	}
+
+	sp.runStarted = true
+	return true
+}
+
 const (
 	finishMsg   = "__finish"
 	finishedMsg = "__finished"
@@ -99,7 +126,10 @@ func (sp *sputnik) finish(init bool) {
 	m := make(Msg)
 	m["__name"] = finishMsg
 	sp.q.PutMT(m)
-	return
+}
+
+func (sp *sputnik) msgReceived(msg Msg) {
+	sp.q.PutMT(msg)
 }
 
 func (sp *sputnik) serverConnected(connection any, logger any) {
@@ -114,11 +144,6 @@ func (sp *sputnik) serverDisConnected(connection any) {
 	}
 }
 
-func (sp *sputnik) msgReceived(msg Msg) {
-	sp.q.PutMT(msg)
-	return
-}
-
 func (sp *sputnik) runInternal() (err error) {
 
 	sp.run(nil)
@@ -126,8 +151,35 @@ func (sp *sputnik) runInternal() (err error) {
 	return nil
 }
 
+// TODO Add timeout for abort/ShootDown
 func (sp *sputnik) abort() {
-	return
+
+	if sp.finishBeforeLaunch() {
+		return
+	}
+
+	sp.finish(false)
+
+	select {
+	case <-sp.done:
+		return
+	}
+}
+
+func (sp *sputnik) finishBeforeLaunch() bool {
+	sp.lock.Lock()
+	defer sp.lock.Unlock()
+
+	if sp.runStarted {
+		return false
+	}
+
+	for i := len(sp.abs) - 1; i >= 0; i-- {
+		sp.abs[i].finish()
+	}
+
+	sp.abortStarted = true
+	return true
 }
 
 func (sp *sputnik) activeinitiator() *activeBlock {
@@ -162,19 +214,24 @@ func (sp *sputnik) processMsg(m Msg) {
 	case finishedMsg:
 		sp.processFinished()
 	}
-
-	return
 }
 
 func (sp *sputnik) processFinish() {
+	if sp.finishStarted {
+		return
+	}
+	sp.finishStarted = true
+
 	for i := len(sp.abs) - 1; i >= 0; i-- {
 		sp.abs[i].bc.Finish()
 	}
+
+	sp.finishedBlks = 0
 }
 
 func (sp *sputnik) processFinished() {
-	sp.finished++
-	if sp.finished == len(sp.abs)-1 {
-		sp.q.CancelMT()
+	sp.finishedBlks++
+	if sp.finishedBlks == len(sp.abs)-1 {
+		sp.q.CancelMT() // stop main loop
 	}
 }

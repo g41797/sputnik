@@ -28,7 +28,7 @@ are required for functioning.
 This is the reason to define server connection, logger and
 configuration as any.
 Use type assertions for "casting" to concrete interface/implementation:
-.............
+
 logger, ok := lp.(*log.Logger)
 
 	if ok {
