@@ -32,11 +32,12 @@ func (pr *msgProcessor) cancel() {
 }
 
 func (pr *msgProcessor) process() {
-	msg, ok := pr.q.Get()
-	if !ok {
-		return
+	for {
+		msg, ok := pr.q.Get()
+		if !ok {
+			return
+		}
+		pr.fnc(msg)
 	}
-
-	pr.fnc(msg)
-
+	return
 }

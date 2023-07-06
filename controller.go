@@ -64,13 +64,18 @@ func (cn *controller) ServerDisconnected(sc any) bool {
 func (cn *controller) Finish() {
 
 	icn := cn.abs[0].bc
+	resp := cn.bd.Responsibility
 
+	// This message will be processed by initiator:
 	fm := make(Msg)
 	fm["__name"] = finishedMsg
-	fm["__resp"] = cn.bd.Responsibility
+	fm["__resp"] = resp
 
+	// Dedicate goroutine for finish of the block
 	go func(fn Finish, bc BlockController, m Msg) {
 		fn(false)
-		icn.Send(fm)
+		icn.Send(fm) // Send message to initiator about finished block
 	}(cn.bl.Finish, icn, fm)
+
+	return
 }

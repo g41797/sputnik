@@ -57,6 +57,8 @@ func (bl *finisher) run(self BlockController) {
 		ibc, _ := bl.bc.Controller(InitiatorResponsibility)
 		ibc.Finish()
 	}
+
+	return
 }
 
 func (bl *finisher) finish(init bool) {

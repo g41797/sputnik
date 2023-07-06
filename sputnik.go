@@ -72,6 +72,9 @@ func (sp *sputnik) init(_ any) error {
 
 func (sp *sputnik) run(_ BlockController) {
 
+	sp.done = make(chan struct{})
+	defer close(sp.done)
+
 	if !sp.activate() {
 		return
 	}
@@ -98,9 +101,6 @@ func (sp *sputnik) activate() bool {
 	if sp.abortStarted {
 		return false
 	}
-
-	sp.done = make(chan struct{})
-	defer close(sp.done)
 
 	// Start active blacks on own goroutines
 	for _, abl := range sp.abs[1:] {
@@ -174,7 +174,7 @@ func (sp *sputnik) finishBeforeLaunch() bool {
 		return false
 	}
 
-	for i := len(sp.abs) - 1; i >= 0; i-- {
+	for i := len(sp.abs) - 1; i > 0; i-- {
 		sp.abs[i].finish()
 	}
 
@@ -222,7 +222,7 @@ func (sp *sputnik) processFinish() {
 	}
 	sp.finishStarted = true
 
-	for i := len(sp.abs) - 1; i >= 0; i-- {
+	for i := len(sp.abs) - 1; i > 0; i-- {
 		sp.abs[i].bc.Finish()
 	}
 
