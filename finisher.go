@@ -46,9 +46,10 @@ func (bl *finisher) run(self BlockController) {
 	bl.done = make(chan struct{})
 
 	bl.term = make(chan os.Signal, 3)
-	defer close(bl.term)
-
 	signal.Notify(bl.term, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+
+	defer signal.Reset(syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	defer close(bl.term)
 
 	select {
 	case <-bl.done:

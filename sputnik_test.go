@@ -189,14 +189,19 @@ func (tb *testBlocks) expect(n int, name string) bool {
 // Use this pattern in real application for
 // negotiation between blocks
 func (tb *testBlocks) sendTo(resp string, msg sputnik.Msg) bool {
-	icn := tb.dbl[0].bc
-	bc, exists := icn.Controller(resp)
+	cn := tb.dbl[0].bc
+	bc, exists := cn.Controller(resp)
 
 	if !exists {
 		return false
 	}
 	sok := bc.Send(msg)
 	return sok
+}
+
+func (tb *testBlocks) mainCntrl() sputnik.BlockController {
+	mcn, _ := tb.dbl[0].bc.Controller(sputnik.InitiatorResponsibility)
+	return mcn
 }
 
 // Run Launcher on dedicated goroutine
@@ -235,9 +240,16 @@ func (tb *testBlocks) factories() sputnik.BlockFactories {
 	return res
 }
 
+func (tb *testBlocks) attachQueue() {
+	for i, _ := range tb.dbl {
+		tb.dbl[i].q = tb.q
+	}
+	return
+}
+
 func TestPrepare(t *testing.T) {
 
-	tb := new(testBlocks)
+	tb := NewTestBlocks()
 
 	dsp := dumbSpacePort(tb)
 
@@ -247,6 +259,8 @@ func TestPrepare(t *testing.T) {
 		t.Errorf("Prepare error %v", err)
 	}
 
+	tb.attachQueue()
+
 	kill()
 
 	return
@@ -254,7 +268,7 @@ func TestPrepare(t *testing.T) {
 
 func TestFinisher(t *testing.T) {
 
-	tb := new(testBlocks)
+	tb := NewTestBlocks()
 
 	dsp := dumbSpacePort(tb)
 
@@ -264,6 +278,7 @@ func TestFinisher(t *testing.T) {
 		t.Errorf("Prepare error %v", err)
 	}
 
+	tb.attachQueue()
 	tb.launch = launch
 	tb.kill = kill
 
@@ -275,6 +290,50 @@ func TestFinisher(t *testing.T) {
 	ok := tb.sendTo("finisher", make(sputnik.Msg))
 	if !ok {
 		t.Errorf("send to finisher failed")
+	}
+
+	tb.kill()
+
+	<-tb.done
+
+	return
+}
+
+func TestRun(t *testing.T) {
+
+	tb := NewTestBlocks()
+
+	dsp := dumbSpacePort(tb)
+
+	launch, kill, err := sputnik.Prepare(dsp)
+
+	if err != nil {
+		t.Errorf("Prepare error %v", err)
+	}
+
+	tb.attachQueue()
+	tb.launch = launch
+	tb.kill = kill
+
+	tb.run()
+
+	time.Sleep(1 * time.Second)
+
+	tb.dbl[0].bc.ServerConnected(nil, nil)
+	if !tb.expect(1, "serverConnected") {
+		t.Errorf("Wrong processing of serverconnected")
+	}
+
+	// Simulate ServerConnect
+	tb.mainCntrl().ServerConnected(nil, nil)
+	if !tb.expect(3, "serverConnected") {
+		t.Errorf("Wrong processing of serverconnected")
+	}
+
+	// Simulate ServerDisconnect
+	tb.mainCntrl().ServerDisconnected()
+	if !tb.expect(3, "serverDisConnected") {
+		t.Errorf("Wrong processing of serverDisConnected")
 	}
 
 	tb.kill()
