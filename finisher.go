@@ -14,18 +14,19 @@ func FinisherDescriptor() BlockDescriptor {
 }
 
 func init() {
-	RegisterBlockFactory(DefaultFinisherName,
-		func() Block {
-			finisher := new(finisher)
-			block := Block{
-				Init:   finisher.init,
-				Run:    finisher.run,
-				Finish: finisher.finish,
+	RegisterBlockFactory(DefaultFinisherName, FinisherBlockFactory)
+}
 
-				OnMsg: finisher.debug,
-			}
-			return block
-		})
+func FinisherBlockFactory() Block {
+	finisher := new(finisher)
+	block := Block{
+		Init:   finisher.init,
+		Run:    finisher.run,
+		Finish: finisher.finish,
+
+		OnMsg: finisher.debug,
+	}
+	return block
 }
 
 type finisher struct {

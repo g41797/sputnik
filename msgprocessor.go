@@ -22,13 +22,15 @@ func newMsgProcessor(fnc OnMsg) *msgProcessor {
 	return &pr
 }
 
-func (pr *msgProcessor) submit(msg Msg) (cancelled bool) {
+func (pr *msgProcessor) submit(msg Msg) bool {
 	pr.once.Do(func() { go pr.process() })
-	return !pr.q.PutMT(msg)
+	pok := pr.q.PutMT(msg)
+	return pok
 }
 
 func (pr *msgProcessor) cancel() {
 	pr.q.CancelMT()
+	return
 }
 
 func (pr *msgProcessor) process() {

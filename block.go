@@ -43,7 +43,7 @@ type OnServerConnect func(connection any, logger any)
 
 // Optional OnServerDisconnect callback is executed by sputnik when previously
 // connected server disconnects.
-type OnServerDisconnect func(connection any)
+type OnServerDisconnect func()
 
 // Because asynchronous nature of blocks, negotiation between blocks done using 'messages'
 // Message may be command|query|event|update|...
@@ -51,8 +51,6 @@ type OnServerDisconnect func(connection any)
 // sputnik doesn't force specific format of the message
 // with one exception: key of the map should not start from "__".
 // This prefix is used by sputnik for house-keeping values.
-// You can call Send with nil message, but on the side of the receiver it may be not nil,
-// because data added by sputnik
 type Msg map[string]any
 
 // Optional OnMsg callback is executed by sputnik as result of receiving Msg.
@@ -100,6 +98,7 @@ type BlockController interface {
 	// true is returned if
 	//  - controlled block has OnMsg callback
 	//  - recipient of messages was not cancelled
+	//  - msg != nil
 	Send(msg Msg) bool
 
 	// Asynchronously notify controlled block about server status
@@ -108,7 +107,7 @@ type BlockController interface {
 
 	// Asynchronously notify controlled block about server status
 	// true is returned if controlled block has OnServerDisconnect callback
-	ServerDisconnected(sc any) bool
+	ServerDisconnected() bool
 
 	// Asynchronously call Finish callback of controlled block
 	//

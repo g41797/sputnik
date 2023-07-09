@@ -126,22 +126,26 @@ func (sp *sputnik) finish(init bool) {
 	m := make(Msg)
 	m["__name"] = finishMsg
 	sp.q.PutMT(m)
+	return
 }
 
 func (sp *sputnik) msgReceived(msg Msg) {
 	sp.q.PutMT(msg)
+	return
 }
 
 func (sp *sputnik) serverConnected(connection any, logger any) {
 	for _, abl := range sp.abs[1:] {
 		abl.bc.ServerConnected(connection, logger)
 	}
+	return
 }
 
-func (sp *sputnik) serverDisConnected(connection any) {
+func (sp *sputnik) serverDisConnected() {
 	for _, abl := range sp.abs[1:] {
-		abl.bc.ServerDisconnected(connection)
+		abl.bc.ServerDisconnected()
 	}
+	return
 }
 
 func (sp *sputnik) runInternal() (err error) {
@@ -190,8 +194,9 @@ func (sp *sputnik) activeinitiator() *activeBlock {
 
 func (sp *sputnik) addControllers() {
 	for _, abl := range sp.abs {
-		attachController(abl, sp.abs)
+		attachController(abl.bd.Responsibility, sp.abs)
 	}
+	return
 }
 
 func (sp *sputnik) processMsg(m Msg) {
@@ -214,6 +219,8 @@ func (sp *sputnik) processMsg(m Msg) {
 	case finishedMsg:
 		sp.processFinished()
 	}
+
+	return
 }
 
 func (sp *sputnik) processFinish() {
@@ -234,4 +241,5 @@ func (sp *sputnik) processFinished() {
 	if sp.finishedBlks == len(sp.abs)-1 {
 		sp.q.CancelMT() // stop main loop
 	}
+	return
 }

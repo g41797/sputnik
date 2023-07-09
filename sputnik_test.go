@@ -26,42 +26,50 @@ type dumbBlock struct {
 	q *kissngoqueue.Queue[sputnik.Msg]
 	// Used for synchronization
 	// between finish and run
-	// This pattern meu be used in real application
+	// This pattern may be used in real application
 	stop chan struct{}
 	done chan struct{}
 }
 
 // Block factory:
 func (tb *testBlocks) dbFact() sputnik.Block {
-	db := new(dumbBlock)
-	tb.dbl = append(tb.dbl, db)
+	dmb := new(dumbBlock)
+	tb.dbl = append(tb.dbl, dmb)
 	return sputnik.Block{
-		Init:   db.init,
-		Run:    db.run,
-		Finish: db.finish,
+		Init:   dmb.init,
+		Run:    dmb.run,
+		Finish: dmb.finish,
 
-		OnMsg:        db.eventReceived,
-		OnConnect:    db.serverConnected,
-		OnDisconnect: db.serverDisConnected,
+		OnMsg:        dmb.eventReceived,
+		OnConnect:    dmb.serverConnected,
+		OnDisconnect: dmb.serverDisConnected,
 	}
 }
 
 // dumbBlock support all callbacks of Block:
 //
 // Init
-func (db *dumbBlock) init(cnf any) error {
-	db.stop = make(chan struct{}, 1)
+func (dmb *dumbBlock) init(cnf any) error {
+	dmb.stop = make(chan struct{}, 1)
 	return nil
 }
 
 // Run:
-func (db *dumbBlock) run(bc sputnik.BlockController) {
+func (dmb *dumbBlock) run(bc sputnik.BlockController) {
 
-	db.done = make(chan struct{})
-	defer close(db.done)
+	// Save controller for further communication
+	// with blocks
+	dmb.bc = bc
 
+	dmb.done = make(chan struct{})
+	defer close(dmb.done)
+
+	// select isn't required for one channel
+	// in real application you can add "listening"
+	// on another channels here e.g. timeouts or
+	// redirected OnMsg|OnConnect|etc
 	select {
-	case <-db.stop:
+	case <-dmb.stop:
 		return
 	}
 
@@ -69,49 +77,49 @@ func (db *dumbBlock) run(bc sputnik.BlockController) {
 }
 
 // Finish:
-func (db *dumbBlock) finish(init bool) {
-	close(db.stop) // Cancel Run
+func (dmb *dumbBlock) finish(init bool) {
+	close(dmb.stop) // Cancel Run
 
 	if init {
 		return
 	}
 
 	select {
-	case <-db.done: // Wait finish of Run
+	case <-dmb.done: // Wait finish of Run
 		return
 	}
 	return
 }
 
 // OnServerConnect:
-func (db *dumbBlock) serverConnected(connection any, logger any) {
+func (dmb *dumbBlock) serverConnected(connection any, logger any) {
 	//Inform test about event
 	m := make(sputnik.Msg)
 	m["__name"] = "serverConnected"
-	db.send(m)
+	dmb.send(m)
 	return
 }
 
 // OnServerDisconnect:
-func (db *dumbBlock) serverDisConnected(connection any) {
+func (dmb *dumbBlock) serverDisConnected() {
 	//Inform test about event
 	m := make(sputnik.Msg)
 	m["__name"] = "serverDisConnected"
-	db.send(m)
+	dmb.send(m)
 	return
 }
 
 // OnMsg:
-func (db *dumbBlock) eventReceived(msg sputnik.Msg) {
+func (dmb *dumbBlock) eventReceived(msg sputnik.Msg) {
 	//Inform test about event
-	db.send(msg)
+	dmb.send(msg)
 	return
 }
 
-func (db *dumbBlock) send(msg sputnik.Msg) {
-	if db.q != nil {
+func (dmb *dumbBlock) send(msg sputnik.Msg) {
+	if dmb.q != nil {
 		//Send message to test
-		db.q.PutMT(msg)
+		dmb.q.PutMT(msg)
 	}
 	return
 }
@@ -124,49 +132,6 @@ func dumbSpacePort(tb *testBlocks) sputnik.SpacePort {
 		Finisher:  sputnik.BlockDescriptor{"finisher", "finisher"},
 		BlkFact:   tb.factories(),
 	}
-}
-
-func TestPrepare(t *testing.T) {
-
-	tb := new(testBlocks)
-
-	dsp := dumbSpacePort(tb)
-
-	_, kill, err := sputnik.Prepare(dsp)
-
-	if err != nil {
-		t.Errorf("Prepare error %v", err)
-	}
-
-	kill()
-
-	return
-}
-
-func TestFinisher(t *testing.T) {
-
-	tb := new(testBlocks)
-
-	dsp := dumbSpacePort(tb)
-
-	launch, kill, err := sputnik.Prepare(dsp)
-
-	if err != nil {
-		t.Errorf("Prepare error %v", err)
-	}
-
-	tb.launch = launch
-	tb.kill = kill
-
-	tb.run()
-
-	time.Sleep(1 * time.Second)
-
-	tb.kill()
-
-	<-tb.done
-
-	return
 }
 
 // Test helper:
@@ -224,13 +189,14 @@ func (tb *testBlocks) expect(n int, name string) bool {
 // Use this pattern in real application for
 // negotiation between blocks
 func (tb *testBlocks) sendTo(resp string, msg sputnik.Msg) bool {
-	bc, exists := tb.dbl[0].bc.Controller((resp))
+	icn := tb.dbl[0].bc
+	bc, exists := icn.Controller(resp)
 
 	if !exists {
 		return false
 	}
-
-	return bc.Send(msg)
+	sok := bc.Send(msg)
+	return sok
 }
 
 // Run Launcher on dedicated goroutine
@@ -255,10 +221,65 @@ func (tb *testBlocks) run() {
 func (tb *testBlocks) factories() sputnik.BlockFactories {
 	res := make(sputnik.BlockFactories)
 
-	var factList []string = []string{"dumb", "finisher"}
+	factList := []struct {
+		name string
+		fact sputnik.BlockFactory
+	}{
+		{"dumb", tb.dbFact},
+		{"finisher", sputnik.FinisherBlockFactory},
+	}
 
-	for _, name := range factList {
-		sputnik.RegisterBlockFactoryInner(name, tb.dbFact, res)
+	for _, fd := range factList {
+		sputnik.RegisterBlockFactoryInner(fd.name, fd.fact, res)
 	}
 	return res
+}
+
+func TestPrepare(t *testing.T) {
+
+	tb := new(testBlocks)
+
+	dsp := dumbSpacePort(tb)
+
+	_, kill, err := sputnik.Prepare(dsp)
+
+	if err != nil {
+		t.Errorf("Prepare error %v", err)
+	}
+
+	kill()
+
+	return
+}
+
+func TestFinisher(t *testing.T) {
+
+	tb := new(testBlocks)
+
+	dsp := dumbSpacePort(tb)
+
+	launch, kill, err := sputnik.Prepare(dsp)
+
+	if err != nil {
+		t.Errorf("Prepare error %v", err)
+	}
+
+	tb.launch = launch
+	tb.kill = kill
+
+	tb.run()
+
+	time.Sleep(1 * time.Second)
+
+	// Simulate SIGINT
+	ok := tb.sendTo("finisher", make(sputnik.Msg))
+	if !ok {
+		t.Errorf("send to finisher failed")
+	}
+
+	tb.kill()
+
+	<-tb.done
+
+	return
 }

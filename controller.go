@@ -9,7 +9,8 @@ type controller struct {
 	mpr *msgProcessor
 }
 
-func attachController(abl *activeBlock, abs activeBlocks) {
+func attachController(resp string, abs activeBlocks) {
+	abl, _ := abs.getABl(resp)
 	cn := new(controller)
 	cn.bd = abl.bd
 	cn.bl = abl.bl
@@ -34,11 +35,16 @@ func (cn *controller) Descriptor() BlockDescriptor {
 }
 
 func (cn *controller) Send(msg Msg) bool {
-	if cn.bl.OnMsg == nil {
+	if msg == nil {
 		return false
 	}
 
-	return cn.mpr.submit(msg)
+	if cn.bl.OnMsg == nil {
+		return false
+	}
+	sok := cn.mpr.submit(msg)
+
+	return sok
 }
 
 func (cn *controller) ServerConnected(sc any, lp any) bool {
@@ -51,12 +57,12 @@ func (cn *controller) ServerConnected(sc any, lp any) bool {
 	return true
 }
 
-func (cn *controller) ServerDisconnected(sc any) bool {
+func (cn *controller) ServerDisconnected() bool {
 	if cn.bl.OnDisconnect == nil {
 		return false
 	}
 
-	go cn.bl.OnDisconnect(sc)
+	go cn.bl.OnDisconnect()
 
 	return true
 }
