@@ -1,245 +1,94 @@
 package sputnik
 
-import (
-	"sync"
+type Sputnik struct {
+	// Configuration factory
+	CnfFct func() any
 
-	"github.com/g41797/kissngoqueue"
-)
+	// Block descriptor of used finisher
+	Finisher BlockDescriptor
 
-type sputnik struct {
-	lock          sync.Mutex
-	spp           SpacePort
-	abs           activeBlocks
-	q             *kissngoqueue.Queue[Msg]
-	runStarted    bool
-	abortStarted  bool
-	finishStarted bool
-	finishedBlks  int
-	done          chan struct{}
+	// Application blocks
+	// Order in the list defines order of creation and initialization
+	AppBlocks []BlockDescriptor
+
+	// Block Factories of the process
+	BlkFact BlockFactories
 }
 
-// sputnik has functionality of "initiator" block:
-
-// Factory of initiator:
-func (sp *sputnik) factory() Block {
-	return Block{
-		Init:   sp.init,
-		Run:    sp.run,
-		Finish: sp.finish,
-
-		OnConnect:    sp.serverConnected,
-		OnDisconnect: sp.serverDisConnected,
-		OnMsg:        sp.msgReceived,
+func NewSputnik(cnfn func() any, appBlocks []BlockDescriptor) Sputnik {
+	return Sputnik{
+		CnfFct:    cnfn,
+		AppBlocks: appBlocks,
+		Finisher:  FinisherDescriptor(),
+		BlkFact:   DefaultFactories(),
 	}
 }
 
-// Callback of "initiator" block
-func (sp *sputnik) init(_ any) error {
+// sputnik launcher
+type Launch func() error
 
-	appBlks, err := sp.spp.createActiveBlocks()
+// sputnik shooter
+type ShootDown func()
+
+// Prepare sputnik for launch
+//
+// If creation and initialization of any block failed:
+//
+//   - Finish is called on all already initialized blocks
+//
+//   - Order of finish - reversal of initialization
+//
+//     = Returned error describes reason of the failure
+//
+// Otherwise returned 2 functions for sputnik management:
+//
+//   - lfn - Launch of the sputnik , exit from this function will be
+//     after signal for shutdown of the process  or after call of
+//     second returned function (see below)
+//
+//   - st - ShootDown of sputnik - abort flight
+func Prepare(spk Sputnik) (lfn Launch, st ShootDown, err error) {
+
+	inr := new(initiator)
+
+	inr.spk = spk
+
+	err = inr.init(nil)
+
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	ibs := make(activeBlocks, 0)
+	return inr.runInternal, inr.abort, nil
+}
 
-	for _, abl := range appBlks {
-		err = abl.init(sp.spp.CnfFct())
+func (spk *Sputnik) createActiveBlocks() (activeBlocks, error) {
+
+	dscrs := make([]BlockDescriptor, 0)
+	dscrs = append(dscrs, spk.Finisher)
+	dscrs = append(dscrs, spk.AppBlocks...)
+
+	abls := make(activeBlocks, 0)
+
+	for _, bd := range dscrs {
+		abl, err := spk.createByDescr(bd)
 		if err != nil {
-			break
+			return nil, err
 		}
-		ibs = append(ibs, abl)
+		abls = append(abls, abl)
 	}
+
+	return abls, nil
+}
+
+func (spk *Sputnik) createByDescr(bd BlockDescriptor) (*activeBlock, error) {
+	b, err := spk.BlkFact.createByDescr(&bd)
 
 	if err != nil {
-		for i := len(ibs) - 1; i >= 0; i-- {
-			ibs[i].finish()
-		}
-
-		return err
+		return nil, err
 	}
 
-	sp.abs = make(activeBlocks, 0)
-	sp.abs = append(sp.abs, sp.activeinitiator())
-	sp.abs = append(sp.abs, ibs...)
+	abl := newActiveBlock(bd, *b)
 
-	sp.addControllers()
-
-	sp.q = kissngoqueue.NewQueue[Msg]()
-
-	return nil
-}
-
-func (sp *sputnik) run(_ BlockController) {
-
-	sp.done = make(chan struct{})
-	defer close(sp.done)
-
-	if !sp.activate() {
-		return
-	}
-
-	// Main loop
-	for {
-		nm, ok := sp.q.Get()
-		if !ok { //all blocks finished
-			break
-		}
-		if nm == nil {
-			continue
-		}
-		sp.processMsg(nm)
-	}
-
-	return
-}
-
-func (sp *sputnik) activate() bool {
-	sp.lock.Lock()
-	defer sp.lock.Unlock()
-
-	if sp.abortStarted {
-		return false
-	}
-
-	// Start active blacks on own goroutines
-	for _, abl := range sp.abs[1:] {
-		go func(fr Run, bc BlockController) {
-			fr(bc)
-		}(abl.bl.Run, abl.bc)
-	}
-
-	sp.runStarted = true
-	return true
-}
-
-const (
-	finishMsg   = "__finish"
-	finishedMsg = "__finished"
-)
-
-func (sp *sputnik) finish(init bool) {
-	if init {
-		return
-	}
-
-	m := make(Msg)
-	m["__name"] = finishMsg
-	sp.q.PutMT(m)
-	return
-}
-
-func (sp *sputnik) msgReceived(msg Msg) {
-	sp.q.PutMT(msg)
-	return
-}
-
-func (sp *sputnik) serverConnected(connection any, logger any) {
-	for _, abl := range sp.abs[1:] {
-		abl.bc.ServerConnected(connection, logger)
-	}
-	return
-}
-
-func (sp *sputnik) serverDisConnected() {
-	for _, abl := range sp.abs[1:] {
-		abl.bc.ServerDisconnected()
-	}
-	return
-}
-
-func (sp *sputnik) runInternal() (err error) {
-
-	sp.run(nil)
-
-	return nil
-}
-
-// TODO Add timeout for abort/ShootDown
-func (sp *sputnik) abort() {
-
-	if sp.finishBeforeLaunch() {
-		return
-	}
-
-	sp.finish(false)
-
-	select {
-	case <-sp.done:
-		return
-	}
-}
-
-func (sp *sputnik) finishBeforeLaunch() bool {
-	sp.lock.Lock()
-	defer sp.lock.Unlock()
-
-	if sp.runStarted {
-		return false
-	}
-
-	for i := len(sp.abs) - 1; i > 0; i-- {
-		sp.abs[i].finish()
-	}
-
-	sp.abortStarted = true
-	return true
-}
-
-func (sp *sputnik) activeinitiator() *activeBlock {
-	ibl := newActiveBlock(
-		BlockDescriptor{InitiatorResponsibility, InitiatorResponsibility}, sp.factory())
-	return &ibl
-}
-
-func (sp *sputnik) addControllers() {
-	for _, abl := range sp.abs {
-		attachController(abl.bd.Responsibility, sp.abs)
-	}
-	return
-}
-
-func (sp *sputnik) processMsg(m Msg) {
-
-	mn, exists := m["__name"]
-
-	if !exists {
-		return
-	}
-
-	name, ok := mn.(string)
-
-	if !ok {
-		return
-	}
-
-	switch name {
-	case finishMsg:
-		sp.processFinish()
-	case finishedMsg:
-		sp.processFinished()
-	}
-
-	return
-}
-
-func (sp *sputnik) processFinish() {
-	if sp.finishStarted {
-		return
-	}
-	sp.finishStarted = true
-
-	for i := len(sp.abs) - 1; i > 0; i-- {
-		sp.abs[i].bc.Finish()
-	}
-
-	sp.finishedBlks = 0
-}
-
-func (sp *sputnik) processFinished() {
-	sp.finishedBlks++
-	if sp.finishedBlks == len(sp.abs)-1 {
-		sp.q.CancelMT() // stop main loop
-	}
-	return
+	return &abl, nil
 }

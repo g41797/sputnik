@@ -124,9 +124,8 @@ func (dmb *dumbBlock) send(msg sputnik.Msg) {
 	return
 }
 
-// Spaceport of sputnik:
-func dumbSpacePort(tb *testBlocks) sputnik.SpacePort {
-	return sputnik.SpacePort{
+func dumbSputnik(tb *testBlocks) sputnik.Sputnik {
+	return sputnik.Sputnik{
 		CnfFct:    dumbConf,
 		AppBlocks: blkList,
 		Finisher:  sputnik.BlockDescriptor{"finisher", "finisher"},
@@ -251,7 +250,7 @@ func TestPrepare(t *testing.T) {
 
 	tb := NewTestBlocks()
 
-	dsp := dumbSpacePort(tb)
+	dsp := dumbSputnik(tb)
 
 	_, kill, err := sputnik.Prepare(dsp)
 
@@ -270,7 +269,7 @@ func TestFinisher(t *testing.T) {
 
 	tb := NewTestBlocks()
 
-	dsp := dumbSpacePort(tb)
+	dsp := dumbSputnik(tb)
 
 	launch, kill, err := sputnik.Prepare(dsp)
 
@@ -303,7 +302,7 @@ func TestRun(t *testing.T) {
 
 	tb := NewTestBlocks()
 
-	dsp := dumbSpacePort(tb)
+	dsp := dumbSputnik(tb)
 
 	launch, kill, err := sputnik.Prepare(dsp)
 
@@ -318,11 +317,6 @@ func TestRun(t *testing.T) {
 	tb.run()
 
 	time.Sleep(1 * time.Second)
-
-	tb.dbl[0].bc.ServerConnected(nil, nil)
-	if !tb.expect(1, "serverConnected") {
-		t.Errorf("Wrong processing of serverconnected")
-	}
 
 	// Simulate ServerConnect
 	tb.mainCntrl().ServerConnected(nil, nil)

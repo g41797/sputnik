@@ -16,9 +16,11 @@ sputnik supports common for all satellite processes functionality:
 
 # Eats own dog food
 
-sputnik itself consists of 2 blocks:
+sputnik itself consists of 3 blocks:
   - "initiator" - dispatcher of all blocks
-  - "finisher" - listener of external shutdown/exit events
+  - "finisher"  - listener of external shutdown/exit events
+  - "connector" - connects/reconnects with server, provides this
+    information to another blocks
 
 # Less You Know, the Better You Sleep
 
