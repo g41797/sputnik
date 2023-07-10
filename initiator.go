@@ -19,16 +19,15 @@ type initiator struct {
 }
 
 // Factory of initiator:
-func (inr *initiator) factory() Block {
-	return Block{
-		Init:   inr.init,
-		Run:    inr.run,
-		Finish: inr.finish,
-
-		OnConnect:    inr.serverConnected,
-		OnDisconnect: inr.serverDisConnected,
-		OnMsg:        inr.msgReceived,
-	}
+func (inr *initiator) factory() *Block {
+	return NewBlock(
+		WithInit(inr.init),
+		WithRun(inr.run),
+		WithFinish(inr.finish),
+		WithOnConnect(inr.serverConnected),
+		WithOnDisConnect(inr.serverDisConnected),
+		WithOnMsg(inr.msgReceived),
+	)
 }
 
 func (inr *initiator) init(_ any) error {
@@ -103,7 +102,7 @@ func (inr *initiator) activate() bool {
 	for _, abl := range inr.abs[1:] {
 		go func(fr Run, bc BlockController) {
 			fr(bc)
-		}(abl.bl.Run, abl.bc)
+		}(abl.bl.run, abl.bc)
 	}
 
 	inr.runStarted = true

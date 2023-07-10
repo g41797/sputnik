@@ -32,18 +32,18 @@ type dumbBlock struct {
 }
 
 // Block factory:
-func (tb *testBlocks) dbFact() sputnik.Block {
+func (tb *testBlocks) dbFact() *sputnik.Block {
 	dmb := new(dumbBlock)
 	tb.dbl = append(tb.dbl, dmb)
-	return sputnik.Block{
-		Init:   dmb.init,
-		Run:    dmb.run,
-		Finish: dmb.finish,
+	return sputnik.NewBlock(
+		sputnik.WithInit(dmb.init),
+		sputnik.WithRun(dmb.run),
+		sputnik.WithFinish(dmb.finish),
 
-		OnMsg:        dmb.eventReceived,
-		OnConnect:    dmb.serverConnected,
-		OnDisconnect: dmb.serverDisConnected,
-	}
+		sputnik.WithOnMsg(dmb.eventReceived),
+		sputnik.WithOnConnect(dmb.serverConnected),
+		sputnik.WithOnDisConnect(dmb.serverDisConnected),
+	)
 }
 
 // dumbBlock support all callbacks of Block:

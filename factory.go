@@ -5,7 +5,7 @@ import (
 )
 
 // BlockFactory should be provided for every block in the process
-type BlockFactory func() Block
+type BlockFactory func() *Block
 
 type BlockFactories map[string]BlockFactory
 
@@ -76,7 +76,7 @@ func (bfs BlockFactories) createByName(name string) (blk *Block, exist bool) {
 		return nil, false
 	}
 
-	return &bl, true
+	return bl, true
 }
 
 func (bfs BlockFactories) createByDescr(bd *BlockDescriptor) (blk *Block, err error) {

@@ -17,15 +17,13 @@ func init() {
 	RegisterBlockFactory(DefaultFinisherName, finisherBlockFactory)
 }
 
-func finisherBlockFactory() Block {
+func finisherBlockFactory() *Block {
 	finisher := new(finisher)
-	block := Block{
-		Init:   finisher.init,
-		Run:    finisher.run,
-		Finish: finisher.finish,
-
-		OnMsg: finisher.debug,
-	}
+	block := NewBlock(
+		WithInit(finisher.init),
+		WithRun(finisher.run),
+		WithFinish(finisher.finish),
+		WithOnMsg(finisher.debug))
 	return block
 }
 

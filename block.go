@@ -66,19 +66,65 @@ type OnMsg func(msg Msg)
 //   - OnServerDisconnect
 //   - Finish
 //
-// Please pay attention, that after Run order of callbacks will be unpredictable.
+// After Run order of callbacks will be unpredictable.
 type Block struct {
-	Init         Init
-	Run          Run
-	Finish       Finish
-	OnConnect    OnServerConnect
-	OnDisconnect OnServerDisconnect
-	OnMsg        OnMsg
+	init         Init
+	run          Run
+	finish       Finish
+	onConnect    OnServerConnect
+	onDisconnect OnServerDisconnect
+	onMsg        OnMsg
+}
+
+type BlockOption = func(b *Block)
+
+func NewBlock(opts ...BlockOption) *Block {
+	blk := new(Block)
+	for _, opt := range opts {
+		opt(blk)
+	}
+	return blk
+}
+
+func WithInit(f Init) BlockOption {
+	return func(b *Block) {
+		b.init = f
+	}
+}
+
+func WithRun(f Run) BlockOption {
+	return func(b *Block) {
+		b.run = f
+	}
+}
+
+func WithFinish(f Finish) BlockOption {
+	return func(b *Block) {
+		b.finish = f
+	}
+}
+
+func WithOnConnect(f OnServerConnect) BlockOption {
+	return func(b *Block) {
+		b.onConnect = f
+	}
+}
+
+func WithOnDisConnect(f OnServerDisconnect) BlockOption {
+	return func(b *Block) {
+		b.onDisconnect = f
+	}
+}
+
+func WithOnMsg(f OnMsg) BlockOption {
+	return func(b *Block) {
+		b.onMsg = f
+	}
 }
 
 // Check presence of mandatory callbacks
 func (bl *Block) isValid() bool {
-	return bl.Init != nil && bl.Run != nil && bl.Finish != nil
+	return bl.init != nil && bl.run != nil && bl.finish != nil
 }
 
 // BlockController provides possibility for negotiation between blocks

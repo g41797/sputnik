@@ -88,7 +88,7 @@ func (spk *Sputnik) createByDescr(bd BlockDescriptor) (*activeBlock, error) {
 		return nil, err
 	}
 
-	abl := newActiveBlock(bd, *b)
+	abl := newActiveBlock(bd, b)
 
 	return &abl, nil
 }
