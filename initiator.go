@@ -130,9 +130,9 @@ func (inr *initiator) msgReceived(msg Msg) {
 	return
 }
 
-func (inr *initiator) serverConnected(connection any, logger any) {
+func (inr *initiator) serverConnected(connection any) {
 	for _, abl := range inr.abs[1:] {
-		abl.bc.ServerConnected(connection, logger)
+		abl.bc.ServerConnected(connection)
 	}
 	return
 }

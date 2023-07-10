@@ -47,12 +47,12 @@ func (cn *controller) Send(msg Msg) bool {
 	return sok
 }
 
-func (cn *controller) ServerConnected(sc any, lp any) bool {
+func (cn *controller) ServerConnected(sc any) bool {
 	if cn.bl.onConnect == nil {
 		return false
 	}
 
-	go cn.bl.onConnect(sc, lp)
+	go cn.bl.onConnect(sc)
 
 	return true
 }

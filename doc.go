@@ -25,18 +25,10 @@ sputnik itself consists of 3 blocks:
 # Less You Know, the Better You Sleep
 
 sputnik knows nothing about internals of the process.
-It only assumes that server connection, configuration and logger
+It only assumes that server configuration and connection
 are required for functioning.
-This is the reason to define server connection, logger and
+This is the reason to define server connection and
 configuration as any.
-Use type assertions for "casting" to concrete interface/implementation:
-
-logger, ok := lp.(*log.Logger)
-
-	if ok {
-		logger.Println(....)
-	}
-
-.............
+Use type assertions for "casting" to concrete interface/implementation.
 */
 package sputnik

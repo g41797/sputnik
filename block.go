@@ -39,7 +39,7 @@ type Finish func(init bool)
 
 // Optional OnServerConnect callback is executed by sputnik after successful
 // connection to server.
-type OnServerConnect func(connection any, logger any)
+type OnServerConnect func(connection any)
 
 // Optional OnServerDisconnect callback is executed by sputnik when previously
 // connected server disconnects.
@@ -149,7 +149,7 @@ type BlockController interface {
 
 	// Asynchronously notify controlled block about server status
 	// true is returned if if controlled block has OnServerConnect callback
-	ServerConnected(sc any, lp any) bool
+	ServerConnected(sc any) bool
 
 	// Asynchronously notify controlled block about server status
 	// true is returned if controlled block has OnServerDisconnect callback

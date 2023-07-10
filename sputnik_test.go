@@ -92,7 +92,7 @@ func (dmb *dumbBlock) finish(init bool) {
 }
 
 // OnServerConnect:
-func (dmb *dumbBlock) serverConnected(connection any, logger any) {
+func (dmb *dumbBlock) serverConnected(connection any) {
 	//Inform test about event
 	m := make(sputnik.Msg)
 	m["__name"] = "serverConnected"
@@ -321,7 +321,7 @@ func TestRun(t *testing.T) {
 	time.Sleep(1 * time.Second)
 
 	// Simulate ServerConnect
-	tb.mainCntrl().ServerConnected(nil, nil)
+	tb.mainCntrl().ServerConnected(nil)
 	if !tb.expect(3, "serverConnected") {
 		t.Errorf("Wrong processing of serverconnected")
 	}

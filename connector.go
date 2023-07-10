@@ -11,15 +11,14 @@ type Configurator interface {
 type Server interface {
 	Configurator
 
-	// Connects to the server and return connection to server and logger
-	// for send log information to the server
+	// Connects to the server and return connection to server
 	// If connection failed, returns error.
 	// ' Connect' for already connected
 	// and still not brocken connection should
-	// return the same values returned in previous
+	// return the same value returned in previous
 	// successful call(s) and nil error
 	//
-	Connect() (conn, logger any, err error)
+	Connect() (conn, err error)
 
 	// Returns false if
 	//  - was not connected at all
