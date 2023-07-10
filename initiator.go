@@ -31,7 +31,6 @@ func (inr *initiator) factory() Block {
 	}
 }
 
-// Callback of "initiator" block
 func (inr *initiator) init(_ any) error {
 
 	appBlks, err := inr.spk.createActiveBlocks()

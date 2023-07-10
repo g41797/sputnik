@@ -225,12 +225,14 @@ func (tb *testBlocks) run() {
 func (tb *testBlocks) factories() sputnik.BlockFactories {
 	res := make(sputnik.BlockFactories)
 
+	finfct, _ := sputnik.Factory(sputnik.DefaultFinisherName)
+
 	factList := []struct {
 		name string
 		fact sputnik.BlockFactory
 	}{
 		{"dumb", tb.dbFact},
-		{"finisher", sputnik.FinisherBlockFactory},
+		{"finisher", finfct},
 	}
 
 	for _, fd := range factList {

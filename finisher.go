@@ -14,10 +14,10 @@ func FinisherDescriptor() BlockDescriptor {
 }
 
 func init() {
-	RegisterBlockFactory(DefaultFinisherName, FinisherBlockFactory)
+	RegisterBlockFactory(DefaultFinisherName, finisherBlockFactory)
 }
 
-func FinisherBlockFactory() Block {
+func finisherBlockFactory() Block {
 	finisher := new(finisher)
 	block := Block{
 		Init:   finisher.init,

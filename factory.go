@@ -52,6 +52,17 @@ func RegisterBlockFactoryInner(name string, bf BlockFactory, facts BlockFactorie
 	return nil
 }
 
+func Factory(name string) (BlockFactory, error) {
+	bfs := DefaultFactories()
+
+	fct, exists := bfs[name]
+
+	if !exists {
+		return nil, fmt.Errorf("factory for %s does not exist", name)
+	}
+	return fct, nil
+}
+
 func (bfs BlockFactories) createByName(name string) (blk *Block, exist bool) {
 	fct, ok := bfs[name]
 
