@@ -125,12 +125,12 @@ func (dmb *dumbBlock) send(msg sputnik.Msg) {
 }
 
 func dumbSputnik(tb *testBlocks) sputnik.Sputnik {
-	return sputnik.Sputnik{
-		CnfFct:    dumbConf,
-		AppBlocks: blkList,
-		Finisher:  sputnik.BlockDescriptor{"finisher", "finisher"},
-		BlkFact:   tb.factories(),
-	}
+	sp, _ := sputnik.NewSputnik(
+		sputnik.WithConfFactory(dumbConf),
+		sputnik.WithAppBlocks(blkList),
+		sputnik.WithBlockFactories(tb.factories()),
+	)
+	return *sp
 }
 
 // Test helper:
@@ -254,7 +254,7 @@ func TestPrepare(t *testing.T) {
 
 	dsp := dumbSputnik(tb)
 
-	_, kill, err := sputnik.Prepare(dsp)
+	_, kill, err := dsp.Prepare()
 
 	if err != nil {
 		t.Errorf("Prepare error %v", err)
@@ -273,7 +273,7 @@ func TestFinisher(t *testing.T) {
 
 	dsp := dumbSputnik(tb)
 
-	launch, kill, err := sputnik.Prepare(dsp)
+	launch, kill, err := dsp.Prepare()
 
 	if err != nil {
 		t.Errorf("Prepare error %v", err)
@@ -306,7 +306,7 @@ func TestRun(t *testing.T) {
 
 	dsp := dumbSputnik(tb)
 
-	launch, kill, err := sputnik.Prepare(dsp)
+	launch, kill, err := dsp.Prepare()
 
 	if err != nil {
 		t.Errorf("Prepare error %v", err)

@@ -40,7 +40,7 @@ func (inr *initiator) init(_ any) error {
 	ibs := make(activeBlocks, 0)
 
 	for _, abl := range appBlks {
-		err = abl.init(inr.spk.CnfFct())
+		err = abl.init(inr.spk.cnfFact())
 		if err != nil {
 			break
 		}

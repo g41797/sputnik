@@ -6,9 +6,6 @@ import (
 	"syscall"
 )
 
-const DefaultFinisherName = "finisher"
-const DefaultFinisherResponsibility = "finisher"
-
 func FinisherDescriptor() BlockDescriptor {
 	return BlockDescriptor{DefaultFinisherName, DefaultFinisherResponsibility}
 }

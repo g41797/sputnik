@@ -4,14 +4,20 @@ package sputnik
 // This separation allows to run simultaneously blocks with the same Name.
 // Other possibility - blocks with different name but with the same responsibility,
 // e.g. different implementation of "finisher" depends on environment.
-//
-// initiator block has predetermined Responsibility - "initiator"
-const InitiatorResponsibility = "initiator"
-
 type BlockDescriptor struct {
 	Name           string
 	Responsibility string
 }
+
+const (
+	InitiatorResponsibility = "initiator"
+
+	DefaultConnectorName           = "connector"
+	DefaultConnectorResponsibility = "connector"
+
+	DefaultFinisherName           = "finisher"
+	DefaultFinisherResponsibility = "finisher"
+)
 
 // Block has set of the callbacks:
 //   - mandatory:	Init|Run|Finish
@@ -76,7 +82,7 @@ type Block struct {
 	onMsg        OnMsg
 }
 
-type BlockOption = func(b *Block)
+type BlockOption func(b *Block)
 
 func NewBlock(opts ...BlockOption) *Block {
 	blk := new(Block)

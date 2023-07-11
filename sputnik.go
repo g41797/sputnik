@@ -1,27 +1,86 @@
 package sputnik
 
+import "fmt"
+
+// Configuration Factory
+type ConfFactory func() any
+
 type Sputnik struct {
 	// Configuration factory
-	CnfFct func() any
+	cnfFact ConfFactory
 
 	// Block descriptor of used finisher
-	Finisher BlockDescriptor
+	fbd BlockDescriptor
 
 	// Application blocks
 	// Order in the list defines order of creation and initialization
-	AppBlocks []BlockDescriptor
+	appBlocks []BlockDescriptor
 
 	// Block Factories of the process
-	BlkFact BlockFactories
+	blkFacts BlockFactories
+
+	// Server connector plug-in
+	cnt Connector
+
+	// Block descriptor of used connector
+	cnd BlockDescriptor
 }
 
-func NewSputnik(cnfn func() any, appBlocks []BlockDescriptor) Sputnik {
-	return Sputnik{
-		CnfFct:    cnfn,
-		AppBlocks: appBlocks,
-		Finisher:  FinisherDescriptor(),
-		BlkFact:   DefaultFactories(),
+type SputnikOption func(sp *Sputnik)
+
+func WithConfFactory(cf ConfFactory) SputnikOption {
+	return func(sp *Sputnik) {
+		sp.cnfFact = cf
 	}
+}
+
+func WithFinisher(fbd BlockDescriptor) SputnikOption {
+	return func(sp *Sputnik) {
+		sp.fbd = fbd
+	}
+}
+
+func WithAppBlocks(appBlocks []BlockDescriptor) SputnikOption {
+	return func(sp *Sputnik) {
+		sp.appBlocks = appBlocks
+	}
+}
+
+func WithBlockFactories(blkFacts BlockFactories) SputnikOption {
+	return func(sp *Sputnik) {
+		sp.blkFacts = blkFacts
+	}
+}
+
+func WithConnector(cnt Connector) SputnikOption {
+	return func(sp *Sputnik) {
+		sp.cnt = cnt
+	}
+}
+
+func (sp *Sputnik) isValid() bool {
+	return sp.cnfFact != nil && sp.appBlocks != nil
+}
+
+func NewSputnik(opts ...SputnikOption) (*Sputnik, error) {
+	sp := new(Sputnik)
+
+	// Pre-sets
+	WithFinisher(FinisherDescriptor())(sp)
+	WithBlockFactories(DefaultFactories())(sp)
+
+	sp.cnd = BlockDescriptor{DefaultConnectorName, DefaultConnectorResponsibility}
+
+	for _, opt := range opts {
+		opt(sp)
+	}
+
+	ok := sp.isValid()
+	if !ok {
+		return nil, fmt.Errorf("not enough options for sputnik creation")
+	}
+
+	return sp, nil
 }
 
 // sputnik launcher
@@ -47,7 +106,7 @@ type ShootDown func()
 //     second returned function (see below)
 //
 //   - st - ShootDown of sputnik - abort flight
-func Prepare(spk Sputnik) (lfn Launch, st ShootDown, err error) {
+func (spk Sputnik) Prepare() (lfn Launch, st ShootDown, err error) {
 
 	inr := new(initiator)
 
@@ -65,8 +124,8 @@ func Prepare(spk Sputnik) (lfn Launch, st ShootDown, err error) {
 func (spk *Sputnik) createActiveBlocks() (activeBlocks, error) {
 
 	dscrs := make([]BlockDescriptor, 0)
-	dscrs = append(dscrs, spk.Finisher)
-	dscrs = append(dscrs, spk.AppBlocks...)
+	dscrs = append(dscrs, spk.fbd)
+	dscrs = append(dscrs, spk.appBlocks...)
 
 	abls := make(activeBlocks, 0)
 
@@ -82,7 +141,7 @@ func (spk *Sputnik) createActiveBlocks() (activeBlocks, error) {
 }
 
 func (spk *Sputnik) createByDescr(bd BlockDescriptor) (*activeBlock, error) {
-	b, err := spk.BlkFact.createByDescr(&bd)
+	b, err := spk.blkFacts.createByDescr(&bd)
 
 	if err != nil {
 		return nil, err
