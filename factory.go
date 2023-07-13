@@ -72,10 +72,6 @@ func (bfs BlockFactories) createByName(name string) (blk *Block, exist bool) {
 
 	bl := fct()
 
-	if !bl.isValid() {
-		return nil, false
-	}
-
 	return bl, true
 }
 

@@ -21,6 +21,8 @@ func TestPrepare(t *testing.T) {
 
 	tb.attachQueue()
 
+	time.Sleep(time.Second)
+
 	kill()
 
 	return
@@ -80,13 +82,13 @@ func TestRun(t *testing.T) {
 	time.Sleep(1 * time.Second)
 
 	// Simulate ServerConnect
-	tb.mainCntrl().ServerConnected(nil)
+	tb.conntr.setState(true)
 	if !tb.expect(3, "serverConnected") {
 		t.Errorf("Wrong processing of serverconnected")
 	}
 
 	// Simulate ServerDisconnect
-	tb.mainCntrl().ServerDisconnected()
+	tb.conntr.setState(false)
 	if !tb.expect(3, "serverDisConnected") {
 		t.Errorf("Wrong processing of serverDisConnected")
 	}

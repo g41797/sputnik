@@ -128,8 +128,15 @@ func WithOnMsg(f OnMsg) BlockOption {
 	}
 }
 
-// Check presence of mandatory callbacks
-func (bl *Block) isValid() bool {
+// 1 - Check presence of mandatory callbacks: init|run|finish
+// 2 - if oncenabled == false, callbacks onConnect|onDisconnect should be nil
+func (bl *Block) isValid(oncenabled bool) bool {
+	if !oncenabled {
+		if bl.onConnect != nil || bl.onDisconnect != nil {
+			return false
+		}
+	}
+
 	return bl.init != nil && bl.run != nil && bl.finish != nil
 }
 

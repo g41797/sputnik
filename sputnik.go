@@ -1,6 +1,9 @@
 package sputnik
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 // Configuration Factory
 type ConfFactory func() any
@@ -21,6 +24,9 @@ type Sputnik struct {
 
 	// Server connector plug-in
 	cnt Connector
+
+	// Timeout for connect/reconnect/check connection
+	to time.Duration
 
 	// Block descriptor of used connector
 	cnd BlockDescriptor
@@ -52,9 +58,10 @@ func WithBlockFactories(blkFacts BlockFactories) SputnikOption {
 	}
 }
 
-func WithConnector(cnt Connector) SputnikOption {
+func WithConnector(cnt Connector, to time.Duration) SputnikOption {
 	return func(sp *Sputnik) {
 		sp.cnt = cnt
+		sp.to = to
 	}
 }
 
@@ -125,6 +132,11 @@ func (spk *Sputnik) createActiveBlocks() (activeBlocks, error) {
 
 	dscrs := make([]BlockDescriptor, 0)
 	dscrs = append(dscrs, spk.fbd)
+
+	if spk.cnt != nil {
+		dscrs = append(dscrs, ConnectorDescriptor())
+	}
+
 	dscrs = append(dscrs, spk.appBlocks...)
 
 	abls := make(activeBlocks, 0)
@@ -145,6 +157,10 @@ func (spk *Sputnik) createByDescr(bd BlockDescriptor) (*activeBlock, error) {
 
 	if err != nil {
 		return nil, err
+	}
+
+	if !b.isValid(spk.cnt != nil) {
+		return nil, fmt.Errorf("invalid callbacks in block: name =  %s resp = %s", bd.Name, bd.Responsibility)
 	}
 
 	abl := newActiveBlock(bd, b)

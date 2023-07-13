@@ -63,7 +63,29 @@ func (inr *initiator) init(_ any) error {
 
 	inr.q = kissngoqueue.NewQueue[Msg]()
 
+	inr.setupConnector()
+
 	return nil
+}
+
+func (inr *initiator) setupConnector() {
+	connector := inr.spk.cnt
+	to := inr.spk.to
+
+	if connector == nil {
+		return
+	}
+
+	setupMsg := make(Msg)
+
+	setupMsg["__connector"] = connector
+	setupMsg["__timeout"] = to
+
+	cbl, _ := inr.abs.getABl(DefaultConnectorResponsibility)
+
+	cbl.bc.Send(setupMsg)
+
+	return
 }
 
 func (inr *initiator) run(_ BlockController) {

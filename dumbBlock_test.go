@@ -18,21 +18,6 @@ type dumbBlock struct {
 	done chan struct{}
 }
 
-// Block factory:
-func (tb *testBlocks) dbFact() *sputnik.Block {
-	dmb := new(dumbBlock)
-	tb.dbl = append(tb.dbl, dmb)
-	return sputnik.NewBlock(
-		sputnik.WithInit(dmb.init),
-		sputnik.WithRun(dmb.run),
-		sputnik.WithFinish(dmb.finish),
-
-		sputnik.WithOnMsg(dmb.eventReceived),
-		sputnik.WithOnConnect(dmb.serverConnected),
-		sputnik.WithOnDisConnect(dmb.serverDisConnected),
-	)
-}
-
 // dumbBlock support all callbacks of Block:
 //
 // Init
@@ -109,13 +94,4 @@ func (dmb *dumbBlock) send(msg sputnik.Msg) {
 		dmb.q.PutMT(msg)
 	}
 	return
-}
-
-func dumbSputnik(tb *testBlocks) sputnik.Sputnik {
-	sp, _ := sputnik.NewSputnik(
-		sputnik.WithConfFactory(dumbConf),
-		sputnik.WithAppBlocks(blkList),
-		sputnik.WithBlockFactories(tb.factories()),
-	)
-	return *sp
 }

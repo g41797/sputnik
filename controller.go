@@ -78,10 +78,13 @@ func (cn *controller) Finish() {
 	fm["__resp"] = resp
 
 	// Dedicate goroutine for finish of the block
-	go func(fn Finish, bc BlockController, m Msg) {
+	go func(fn Finish, bc BlockController, m Msg, pr *msgProcessor) {
 		fn(false)
+		if pr != nil {
+			pr.cancel()
+		}
 		icn.Send(fm) // Send message to initiator about finished block
-	}(cn.bl.finish, icn, fm)
+	}(cn.bl.finish, icn, fm, cn.mpr)
 
 	return
 }

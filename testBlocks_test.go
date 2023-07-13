@@ -1,19 +1,11 @@
 package sputnik_test
 
 import (
+	"time"
+
 	"github.com/g41797/kissngoqueue"
 	"github.com/g41797/sputnik"
 )
-
-// Configuration factory:
-func dumbConf() any { return nil }
-
-// Satellite has 3 blocks:
-var blkList []sputnik.BlockDescriptor = []sputnik.BlockDescriptor{
-	{"dumb", "1"},
-	{"dumb", "2"},
-	{"dumb", "3"},
-}
 
 // Test helper:
 type testBlocks struct {
@@ -27,11 +19,16 @@ type testBlocks struct {
 	kill sputnik.ShootDown
 	// Signalling channel
 	done chan struct{}
+	// Connector
+	conntr dummyConnector
+	to     time.Duration
 }
 
 func NewTestBlocks() *testBlocks {
 	tb := new(testBlocks)
 	tb.q = kissngoqueue.NewQueue[sputnik.Msg]()
+	tb.conntr = dummyConnector{}
+	tb.to = time.Millisecond * 100
 	return tb
 }
 
@@ -108,13 +105,15 @@ func (tb *testBlocks) factories() sputnik.BlockFactories {
 	res := make(sputnik.BlockFactories)
 
 	finfct, _ := sputnik.Factory(sputnik.DefaultFinisherName)
+	confct, _ := sputnik.Factory(sputnik.DefaultConnectorName)
 
 	factList := []struct {
 		name string
 		fact sputnik.BlockFactory
 	}{
 		{"dumb", tb.dbFact},
-		{"finisher", finfct},
+		{sputnik.DefaultFinisherName, finfct},
+		{sputnik.DefaultConnectorName, confct},
 	}
 
 	for _, fd := range factList {
@@ -128,4 +127,39 @@ func (tb *testBlocks) attachQueue() {
 		tb.dbl[i].q = tb.q
 	}
 	return
+}
+
+// Block factory:
+func (tb *testBlocks) dbFact() *sputnik.Block {
+	dmb := new(dumbBlock)
+	tb.dbl = append(tb.dbl, dmb)
+	return sputnik.NewBlock(
+		sputnik.WithInit(dmb.init),
+		sputnik.WithRun(dmb.run),
+		sputnik.WithFinish(dmb.finish),
+
+		sputnik.WithOnMsg(dmb.eventReceived),
+		sputnik.WithOnConnect(dmb.serverConnected),
+		sputnik.WithOnDisConnect(dmb.serverDisConnected),
+	)
+}
+
+// Satellite has 3 app. blocks:
+var blkList []sputnik.BlockDescriptor = []sputnik.BlockDescriptor{
+	{"dumb", "1"},
+	{"dumb", "2"},
+	{"dumb", "3"},
+}
+
+// Configuration factory:
+func dumbConf() any { return nil }
+
+func dumbSputnik(tb *testBlocks) sputnik.Sputnik {
+	sp, _ := sputnik.NewSputnik(
+		sputnik.WithConfFactory(dumbConf),
+		sputnik.WithAppBlocks(blkList),
+		sputnik.WithBlockFactories(tb.factories()),
+		sputnik.WithConnector(&tb.conntr, tb.to),
+	)
+	return *sp
 }
