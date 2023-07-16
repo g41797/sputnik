@@ -60,7 +60,7 @@ type OnServerDisconnect func()
 type Msg map[string]any
 
 // Optional OnMsg callback is executed by sputnik as result of receiving Msg.
-// Block can send event to itself.
+// Block can send message to itself.
 // Unlike other callbacks, OnMsg called sequentially one by one from the same goroutine.
 type OnMsg func(msg Msg)
 
