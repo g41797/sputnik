@@ -37,3 +37,51 @@ All this with minimal code size - actually the size of README, tests and comment
 * Launched by the Soviet Union on 4 October 1957, **Sputnik** became the first **satellite** in space and changed the world forever.
 * Main mindset of Sputnik design was - simplicity and reliability that could be adapted to future projects
 * We were both born the same year but I'm a bit older
+
+
+## Sputnik's building blocks
+Building block of Sputnik called (of-course - do you remember *simplicity*?)   **Block**.
+
+**Block** has set of callbacks/hooks:
+* Mandatory:
+  * Init
+  * Finish
+  * Run
+* Optional
+  * OnServerConnect
+  * OnServerDisconnect
+  * OnMsg
+
+You can see that these callbacks reflect life cycle/flow of satellite process.  
+
+### Init
+
+```go
+type Init func(conf any) error
+```
+
+### Finish
+
+```go
+type Init func(conf any) error
+```
+### Run
+
+```go
+type Init func(conf any) error
+```
+### OnServerConnect
+
+```go
+type Init func(conf any) error
+```
+### OnServerDisconnect
+
+```go
+type Init func(conf any) error
+```
+### OnMsg
+
+```go
+type Init func(conf any) error
+```
