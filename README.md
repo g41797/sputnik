@@ -24,7 +24,7 @@ And it would be nice to write in CV that you developed **modular-monolith**.
 ##  Sputnik to the rescue.
 Everything you read above is not fantasy.
 Sputnik supports:
-* Flexibly creation of satellite processes
+* Flexible creation of satellite processes
 * Modular architecture
 * Convenient negotiation between parts of the process
 * Deterministic initialization
