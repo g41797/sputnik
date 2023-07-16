@@ -13,7 +13,7 @@ The same sometimes boring flow:
 
 Usually such processes are used as **adapters**,**bridges** and/or **proxies** for server process - they *translate* foreign protocol to protocol of the server. 
  
-Developers should be able to flexibly create such processes without changing the code:
+Developers also want flexible way to create such processes without changing the code:
   * All adapters in one process
   * Adapter per process
   * Other variants
