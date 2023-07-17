@@ -1,4 +1,6 @@
-# Sputnik
+![](_logo/logo.png)
+
+# 
 Sputnik is tiny golang framework for building of **satellite** or as it's now fashionable to say **side-car** processes.
 
 ##  What do satellite processes have in common?
