@@ -28,15 +28,15 @@ type finisher struct {
 	done chan struct{}
 	term chan os.Signal
 
-	bc BlockController
+	controller BlockController
 }
 
-func (bl *finisher) init(conf any) error {
+func (bl *finisher) init(conf ServerConfiguration) error {
 	return nil
 }
 
 func (bl *finisher) run(self BlockController) {
-	bl.bc = self
+	bl.controller = self
 
 	bl.done = make(chan struct{})
 
@@ -53,7 +53,7 @@ func (bl *finisher) run(self BlockController) {
 		return
 
 	case <-bl.term:
-		ibc, _ := bl.bc.Controller(InitiatorResponsibility)
+		ibc, _ := bl.controller.Controller(InitiatorResponsibility)
 		ibc.Finish()
 	}
 

@@ -3,35 +3,35 @@ package sputnik
 var _ BlockController = &controller{}
 
 type controller struct {
-	bd  BlockDescriptor
-	bl  *Block
-	abs activeBlocks
-	mpr *msgProcessor
+	descriptor BlockDescriptor
+	block      *Block
+	actBlks    activeBlocks
+	mpr        *msgProcessor
 }
 
-func attachController(resp string, abs activeBlocks) {
-	abl, _ := abs.getABl(resp)
+func attachController(resp string, actBlks activeBlocks) {
+	abl, _ := actBlks.getABl(resp)
 	cn := new(controller)
-	cn.bd = abl.bd
-	cn.bl = abl.bl
-	cn.mpr = newMsgProcessor(cn.bl.onMsg)
-	cn.abs = abs
-	abl.bc = cn
+	cn.descriptor = abl.descriptor
+	cn.block = abl.block
+	cn.mpr = newMsgProcessor(cn.block.onMsg)
+	cn.actBlks = actBlks
+	abl.controller = cn
 }
 
 func (cn *controller) Controller(resp string) (bc BlockController, exists bool) {
 
-	abl, exists := cn.abs.getABl(resp)
+	abl, exists := cn.actBlks.getABl(resp)
 
 	if !exists {
 		return nil, false
 	}
 
-	return abl.bc, true
+	return abl.controller, true
 }
 
 func (cn *controller) Descriptor() BlockDescriptor {
-	return cn.bd
+	return cn.descriptor
 }
 
 func (cn *controller) Send(msg Msg) bool {
@@ -39,7 +39,7 @@ func (cn *controller) Send(msg Msg) bool {
 		return false
 	}
 
-	if cn.bl.onMsg == nil {
+	if cn.block.onMsg == nil {
 		return false
 	}
 	sok := cn.mpr.submit(msg)
@@ -47,30 +47,30 @@ func (cn *controller) Send(msg Msg) bool {
 	return sok
 }
 
-func (cn *controller) ServerConnected(sc any) bool {
-	if cn.bl.onConnect == nil {
+func (cn *controller) ServerConnected(sc ServerConnection) bool {
+	if cn.block.onConnect == nil {
 		return false
 	}
 
-	go cn.bl.onConnect(sc)
+	go cn.block.onConnect(sc)
 
 	return true
 }
 
 func (cn *controller) ServerDisconnected() bool {
-	if cn.bl.onDisconnect == nil {
+	if cn.block.onDisconnect == nil {
 		return false
 	}
 
-	go cn.bl.onDisconnect()
+	go cn.block.onDisconnect()
 
 	return true
 }
 
 func (cn *controller) Finish() {
 
-	icn := cn.abs[0].bc
-	resp := cn.bd.Responsibility
+	icn := cn.actBlks[0].controller
+	resp := cn.descriptor.Responsibility
 
 	// This message will be processed by initiator:
 	fm := make(Msg)
@@ -84,7 +84,7 @@ func (cn *controller) Finish() {
 			pr.cancel()
 		}
 		icn.Send(fm) // Send message to initiator about finished block
-	}(cn.bl.finish, icn, fm, cn.mpr)
+	}(cn.block.finish, icn, fm, cn.mpr)
 
 	return
 }

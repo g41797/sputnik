@@ -19,7 +19,7 @@ type testBlocks struct {
 	kill sputnik.ShootDown
 	// Signalling channel
 	done chan struct{}
-	// Connector
+	// ServerConnector
 	conntr dummyConnector
 	to     time.Duration
 }
@@ -67,7 +67,7 @@ func (tb *testBlocks) expect(n int, name string) bool {
 // Use this pattern in real application for
 // negotiation between blocks
 func (tb *testBlocks) sendTo(resp string, msg sputnik.Msg) bool {
-	cn := tb.dbl[0].bc
+	cn := tb.dbl[0].controller
 	bc, exists := cn.Controller(resp)
 
 	if !exists {
@@ -78,7 +78,7 @@ func (tb *testBlocks) sendTo(resp string, msg sputnik.Msg) bool {
 }
 
 func (tb *testBlocks) mainCntrl() sputnik.BlockController {
-	mcn, _ := tb.dbl[0].bc.Controller(sputnik.InitiatorResponsibility)
+	mcn, _ := tb.dbl[0].controller.Controller(sputnik.InitiatorResponsibility)
 	return mcn
 }
 
@@ -152,7 +152,7 @@ var blkList []sputnik.BlockDescriptor = []sputnik.BlockDescriptor{
 }
 
 // Configuration factory:
-func dumbConf() any { return nil }
+func dumbConf() sputnik.ServerConfiguration { return nil }
 
 func dumbSputnik(tb *testBlocks) sputnik.Sputnik {
 	sp, _ := sputnik.NewSputnik(

@@ -2,14 +2,16 @@ package sputnik
 
 import "time"
 
-type Connector interface {
+type ServerConnection any
+
+type ServerConnector interface {
 	// Connects to the server and return connection to server
 	// If connection failed, returns error.
 	// ' Connect' for already connected
 	// and still not brocken connection should
 	// return the same value returned in previous
 	// successful call(s) and nil error
-	Connect(config any) (conn any, err error)
+	Connect(config ServerConfiguration) (conn ServerConnection, err error)
 
 	// Returns false if
 	//  - was not connected at all
@@ -45,10 +47,10 @@ func connectorBlockFactory() *Block {
 type doIt func()
 
 type connector struct {
-	conf any
+	conf ServerConfiguration
 
 	mc  chan Msg
-	cnr Connector
+	cnr ServerConnector
 	to  time.Duration
 
 	cbc BlockController
@@ -61,7 +63,7 @@ type connector struct {
 	connected bool
 }
 
-func (c *connector) init(conf any) error {
+func (c *connector) init(conf ServerConfiguration) error {
 
 	c.conf = conf
 	c.next = c.connect
@@ -138,7 +140,7 @@ func (c *connector) setup(msg Msg) {
 		return
 	}
 
-	c.cnr = cntr.(Connector)
+	c.cnr = cntr.(ServerConnector)
 
 	to, _ := msg["__timeout"]
 

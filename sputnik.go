@@ -5,8 +5,11 @@ import (
 	"time"
 )
 
+// Configuration
+type ServerConfiguration any
+
 // Configuration Factory
-type ConfFactory func() any
+type ConfFactory func() ServerConfiguration
 
 type Sputnik struct {
 	// Configuration factory
@@ -23,12 +26,12 @@ type Sputnik struct {
 	blkFacts BlockFactories
 
 	// Server connector plug-in
-	cnt Connector
+	cnt ServerConnector
 
 	// Timeout for connect/reconnect/check connection
 	to time.Duration
 
-	// Block descriptor of used connector
+	// Descriptor of used connector block
 	cnd BlockDescriptor
 }
 
@@ -58,7 +61,7 @@ func WithBlockFactories(blkFacts BlockFactories) SputnikOption {
 	}
 }
 
-func WithConnector(cnt Connector, to time.Duration) SputnikOption {
+func WithConnector(cnt ServerConnector, to time.Duration) SputnikOption {
 	return func(sp *Sputnik) {
 		sp.cnt = cnt
 		sp.to = to
@@ -113,11 +116,11 @@ type ShootDown func()
 //     second returned function (see below)
 //
 //   - st - ShootDown of sputnik - abort flight
-func (spk Sputnik) Prepare() (lfn Launch, st ShootDown, err error) {
+func (sputnik Sputnik) Prepare() (lfn Launch, st ShootDown, err error) {
 
 	inr := new(initiator)
 
-	inr.spk = spk
+	inr.sputnik = sputnik
 
 	err = inr.init(nil)
 
@@ -128,21 +131,21 @@ func (spk Sputnik) Prepare() (lfn Launch, st ShootDown, err error) {
 	return inr.runInternal, inr.abort, nil
 }
 
-func (spk *Sputnik) createActiveBlocks() (activeBlocks, error) {
+func (sputnik *Sputnik) createActiveBlocks() (activeBlocks, error) {
 
 	dscrs := make([]BlockDescriptor, 0)
-	dscrs = append(dscrs, spk.fbd)
+	dscrs = append(dscrs, sputnik.fbd)
 
-	if spk.cnt != nil {
+	if sputnik.cnt != nil {
 		dscrs = append(dscrs, ConnectorDescriptor())
 	}
 
-	dscrs = append(dscrs, spk.appBlocks...)
+	dscrs = append(dscrs, sputnik.appBlocks...)
 
 	abls := make(activeBlocks, 0)
 
 	for _, bd := range dscrs {
-		abl, err := spk.createByDescr(bd)
+		abl, err := sputnik.createByDescr(bd)
 		if err != nil {
 			return nil, err
 		}
@@ -152,14 +155,14 @@ func (spk *Sputnik) createActiveBlocks() (activeBlocks, error) {
 	return abls, nil
 }
 
-func (spk *Sputnik) createByDescr(bd BlockDescriptor) (*activeBlock, error) {
-	b, err := spk.blkFacts.createByDescr(&bd)
+func (sputnik *Sputnik) createByDescr(bd BlockDescriptor) (*activeBlock, error) {
+	b, err := sputnik.blkFacts.createByDescr(&bd)
 
 	if err != nil {
 		return nil, err
 	}
 
-	if !b.isValid(spk.cnt != nil) {
+	if !b.isValid(sputnik.cnt != nil) {
 		return nil, fmt.Errorf("invalid callbacks in block: name =  %s resp = %s", bd.Name, bd.Responsibility)
 	}
 

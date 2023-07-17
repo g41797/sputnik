@@ -6,13 +6,13 @@ import (
 	"github.com/g41797/sputnik"
 )
 
-var _ sputnik.Connector = &dummyConnector{}
+var _ sputnik.ServerConnector = &dummyConnector{}
 
 type dummyConnector struct {
 	connected bool
 }
 
-func (c *dummyConnector) Connect(config any) (conn any, err error) {
+func (c *dummyConnector) Connect(config sputnik.ServerConfiguration) (conn sputnik.ServerConnection, err error) {
 	if !c.connected {
 		return nil, errors.New("connection failed")
 	}

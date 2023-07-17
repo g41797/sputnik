@@ -28,13 +28,13 @@ const (
 // Some rules :
 //   - don't run hard processing within Init
 //   - don't work with server till call of OnServerConnect
-type Init func(conf any) error
+type Init func(conf ServerConfiguration) error
 
 // After successful initialization of ALL blocks, sputnik creates goroutine and calls Run
 // Other callbacks will be executed on another goroutines
 // After Run block is allowed to negotiate with another blocks of the process
 // via BlockController
-type Run func(self BlockController)
+type Run func(controller BlockController)
 
 // Finish callback is executed by sputnik:
 //   - during initialization  of the process if init of another block failed (init == true)
@@ -45,7 +45,7 @@ type Finish func(init bool)
 
 // Optional OnServerConnect callback is executed by sputnik after successful
 // connection to server.
-type OnServerConnect func(connection any)
+type OnServerConnect func(connection ServerConnection)
 
 // Optional OnServerDisconnect callback is executed by sputnik when previously
 // connected server disconnects.
@@ -129,9 +129,9 @@ func WithOnMsg(f OnMsg) BlockOption {
 }
 
 // 1 - Check presence of mandatory callbacks: init|run|finish
-// 2 - if oncenabled == false, callbacks onConnect|onDisconnect should be nil
-func (bl *Block) isValid(oncenabled bool) bool {
-	if !oncenabled {
+// 2 - if oncdenabled == false, callbacks onConnect|onDisconnect should be nil
+func (bl *Block) isValid(oncdenabled bool) bool {
+	if !oncdenabled {
 		if bl.onConnect != nil || bl.onDisconnect != nil {
 			return false
 		}
@@ -162,7 +162,7 @@ type BlockController interface {
 
 	// Asynchronously notify controlled block about server status
 	// true is returned if if controlled block has OnServerConnect callback
-	ServerConnected(sc any) bool
+	ServerConnected(sc ServerConnection) bool
 
 	// Asynchronously notify controlled block about server status
 	// true is returned if controlled block has OnServerDisconnect callback

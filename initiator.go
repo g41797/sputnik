@@ -8,8 +8,8 @@ import (
 
 type initiator struct {
 	lock          sync.Mutex
-	spk           Sputnik
-	abs           activeBlocks
+	sputnik       Sputnik
+	actBlks       activeBlocks
 	q             *kissngoqueue.Queue[Msg]
 	runStarted    bool
 	abortStarted  bool
@@ -30,9 +30,9 @@ func (inr *initiator) factory() *Block {
 	)
 }
 
-func (inr *initiator) init(_ any) error {
+func (inr *initiator) init(_ ServerConfiguration) error {
 
-	appBlks, err := inr.spk.createActiveBlocks()
+	appBlks, err := inr.sputnik.createActiveBlocks()
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func (inr *initiator) init(_ any) error {
 	ibs := make(activeBlocks, 0)
 
 	for _, abl := range appBlks {
-		err = abl.init(inr.spk.cnfFact())
+		err = abl.init(inr.sputnik.cnfFact())
 		if err != nil {
 			break
 		}
@@ -55,9 +55,9 @@ func (inr *initiator) init(_ any) error {
 		return err
 	}
 
-	inr.abs = make(activeBlocks, 0)
-	inr.abs = append(inr.abs, inr.activeinitiator())
-	inr.abs = append(inr.abs, ibs...)
+	inr.actBlks = make(activeBlocks, 0)
+	inr.actBlks = append(inr.actBlks, inr.activeinitiator())
+	inr.actBlks = append(inr.actBlks, ibs...)
 
 	inr.addControllers()
 
@@ -69,8 +69,8 @@ func (inr *initiator) init(_ any) error {
 }
 
 func (inr *initiator) setupConnector() {
-	connector := inr.spk.cnt
-	to := inr.spk.to
+	connector := inr.sputnik.cnt
+	to := inr.sputnik.to
 
 	if connector == nil {
 		return
@@ -81,9 +81,9 @@ func (inr *initiator) setupConnector() {
 	setupMsg["__connector"] = connector
 	setupMsg["__timeout"] = to
 
-	cbl, _ := inr.abs.getABl(DefaultConnectorResponsibility)
+	cbl, _ := inr.actBlks.getABl(DefaultConnectorResponsibility)
 
-	cbl.bc.Send(setupMsg)
+	cbl.controller.Send(setupMsg)
 
 	return
 }
@@ -121,10 +121,10 @@ func (inr *initiator) activate() bool {
 	}
 
 	// Start active blacks on own goroutines
-	for _, abl := range inr.abs[1:] {
+	for _, abl := range inr.actBlks[1:] {
 		go func(fr Run, bc BlockController) {
 			fr(bc)
-		}(abl.bl.run, abl.bc)
+		}(abl.block.run, abl.controller)
 	}
 
 	inr.runStarted = true
@@ -152,16 +152,16 @@ func (inr *initiator) msgReceived(msg Msg) {
 	return
 }
 
-func (inr *initiator) serverConnected(connection any) {
-	for _, abl := range inr.abs[1:] {
-		abl.bc.ServerConnected(connection)
+func (inr *initiator) serverConnected(connection ServerConnection) {
+	for _, abl := range inr.actBlks[1:] {
+		abl.controller.ServerConnected(connection)
 	}
 	return
 }
 
 func (inr *initiator) serverDisConnected() {
-	for _, abl := range inr.abs[1:] {
-		abl.bc.ServerDisconnected()
+	for _, abl := range inr.actBlks[1:] {
+		abl.controller.ServerDisconnected()
 	}
 	return
 }
@@ -196,8 +196,8 @@ func (inr *initiator) finishBeforeLaunch() bool {
 		return false
 	}
 
-	for i := len(inr.abs) - 1; i > 0; i-- {
-		inr.abs[i].finish()
+	for i := len(inr.actBlks) - 1; i > 0; i-- {
+		inr.actBlks[i].finish()
 	}
 
 	inr.abortStarted = true
@@ -211,8 +211,8 @@ func (inr *initiator) activeinitiator() *activeBlock {
 }
 
 func (inr *initiator) addControllers() {
-	for _, abl := range inr.abs {
-		attachController(abl.bd.Responsibility, inr.abs)
+	for _, abl := range inr.actBlks {
+		attachController(abl.descriptor.Responsibility, inr.actBlks)
 	}
 	return
 }
@@ -247,8 +247,8 @@ func (inr *initiator) processFinish() {
 	}
 	inr.finishStarted = true
 
-	for i := len(inr.abs) - 1; i > 0; i-- {
-		inr.abs[i].bc.Finish()
+	for i := len(inr.actBlks) - 1; i > 0; i-- {
+		inr.actBlks[i].controller.Finish()
 	}
 
 	inr.finishedBlks = 0
@@ -256,7 +256,7 @@ func (inr *initiator) processFinish() {
 
 func (inr *initiator) processFinished() {
 	inr.finishedBlks++
-	if inr.finishedBlks == len(inr.abs)-1 {
+	if inr.finishedBlks == len(inr.actBlks)-1 {
 		inr.q.CancelMT() // stop main loop
 	}
 	return
