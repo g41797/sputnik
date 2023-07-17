@@ -1,7 +1,7 @@
 ![](_logo/logo.png)
 
-# 
-Sputnik is tiny golang framework for building of **satellite** or as it's now fashionable to say **side-car** processes.
+# sputnik [![GoDev](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white)](https://pkg.go.dev/github.com/g41797/sputnik)
+sputnik is tiny golang framework for building of **satellite** or as it's now fashionable to say **side-car** processes.
 
 ##  What do satellite processes have in common?
 The same sometimes boring flow:
@@ -23,24 +23,24 @@ Developers also want flexible way to create such processes without changing the 
 And it would be nice to write in CV that you developed **modular-monolith**. 
 
 
-##  Sputnik to the rescue.
-Sputnik simplifies creation of satellite/sidecar  processes for servers.
+##  sputnik to the rescue.
+sputnik simplifies creation of satellite/sidecar  processes for servers.
 
 ### Modular monolith
 
-Sputnik forces modular-monolith design:
+sputnik forces modular-monolith design:
   - process created as set of independent asynchronously running **Blocks**
 
 ### Satellites blueprint
 
-Sputnik supports common for all satellite processes functionality::
+sputnik supports common for all satellite processes functionality::
 * Deterministic initialization
 * Connect/Reconnect flow
 * Server heartbeat
 * Convenient negotiation between blocks of the process
 * Graceful shutdown
 
-All this with minimal code size - actually the size of README and tests far exceeds size of Sputnik's code.
+All this with minimal code size - actually the size of README and tests far exceeds size of sputnik's code.
 
 ## Why Sputnik?
 * Launched by the Soviet Union on 4 October 1957, **Sputnik** became the first **satellite** in space and changed the world forever.
@@ -49,7 +49,7 @@ All this with minimal code size - actually the size of README and tests far exce
 
 
 ## Less You Know, the Better You Sleep
-Sputnik doesn't use any server information and only assumes that server configuration and connection
+sputnik doesn't use any server information and only assumes that server configuration and connection
 are required for functioning. 
 
 ### Server Configuration
@@ -57,19 +57,19 @@ are required for functioning.
 type ServerConfiguration any
 ```
 
-In order to get configuration and provide it to the process, Sputnik uses *Configuration Factory*:
+In order to get configuration and provide it to the process, sputnik uses *Configuration Factory*:
 ```go
 type ConfFactory func() ServerConfiguration
 ```
 
-This function should be supplied by caller of Sputnik during initialization. We will talk about initialization later.
+This function should be supplied by caller of sputnik during initialization. We will talk about initialization later.
 
 ### Server Connection
 ```go
 type ServerConnection any
 ```
 
-For implementation of connect/disconnect/server health flow, Sputnik uses supplied by caller implementation of following interface:
+For implementation of connect/disconnect/server health flow, sputnik uses supplied by caller implementation of following interface:
 ```go
 type ServerConnector interface {
 	/*
@@ -97,7 +97,7 @@ type ServerConnector interface {
 ```
 
 ### Messages
-Sputnik supports asynchronous communication between Blocks of the process.
+sputnik supports asynchronous communication between Blocks of the process.
 ```go
 type Msg map[string]any
 ```
@@ -111,15 +111,15 @@ Possible types of the message:
 
 Developers of blocks should agree on content of messages.
 
-Sputnik doesn't force specific format of the message.
+sputnik doesn't force specific format of the message.
 
 EXCEPTION: key of the map should not start from "__".
 
 This prefix is used by sputnik for house-keeping values.
 
 
-## Sputnik's building blocks
-Building block of Sputnik called (of-course - do you remember *simplicity*?)   **Block**.
+## sputnik's building blocks
+Building block of sputnik called (of-course - do you remember *simplicity*?)   **Block**.
 
 ### Block identity
 Every Block has descriptor:
@@ -141,7 +141,7 @@ Bad Block names:
 * receiver
 * processor
 
-Remember - Sputnik based process may support number of protocol adapters. And *receiver* usually is part of everyone.
+Remember - sputnik based process may support number of protocol adapters. And *receiver* usually is part of everyone.
 
 *Responsibility* of the Block is used for negotiation between blocks. It's possible to create the same block with different responsibilities.
 
@@ -166,7 +166,7 @@ You can see that these callbacks reflect life cycle/flow of satellite process.
 type Init func(conf any) error
 ```
 
-Init callback is executed by Sputnik once during initialization.
+Init callback is executed by sputnik once during initialization.
 Blocks are initialized in *sequenced order* according to configuration.
 
 Rules of initialization:
@@ -186,7 +186,7 @@ If initialization failed (returned error != nil)
 type Run func(controller BlockController)
 ```
 
-Run callback is executed by Sputnik
+Run callback is executed by sputnik
 * after successful initialization of ALL blocks
 * on own goroutine
 
@@ -200,7 +200,7 @@ Parameter of Run - **BlockController** may be used by block for negotiation with
 type Finish func(init bool)
 ```
 
-Finish callback is executed by Sputnik twice:
+Finish callback is executed by sputnik twice:
 * during initialization of the process, if Init of another block failed (**init == true**)
   * for this case Finish is called synchronously, on the thread(goroutine) of initialization
 * during shutdown of the process 
@@ -218,7 +218,7 @@ After finish of all blocks Sputnik quits.
 type OnServerConnect func(connection any)
 ```
 
-*Optional* OnServerConnect callback is executed by Sputnik
+*Optional* OnServerConnect callback is executed by sputnik
 * after start of *Run*
 * after successful connection to server
 * on own goroutine
@@ -229,7 +229,7 @@ type OnServerConnect func(connection any)
 ```go
 type OnServerDisconnect func()
 ```
-*Optional* OnServerDisconnect callback is executed by Sputnik
+*Optional* OnServerDisconnect callback is executed by sputnik
 * after start of *Run*
 * when previously connected server disconnects
 * on own goroutine
@@ -239,7 +239,7 @@ type OnServerDisconnect func()
 ```go
 type OnMsg func(msg Msg)
 ```
-*Optional*  OnMsg callback is executed by Sputnik 
+*Optional*  OnMsg callback is executed by sputnik 
 * after start of *Run*
 * as result of receiving Msg from another block
 * Block also can send message to itself
@@ -249,7 +249,7 @@ type OnMsg func(msg Msg)
 
 
 ### Eats own dog food
-Sputnik itself consists of 3 **Blocks**:
+sputnik itself consists of 3 **Blocks**:
   * *initiator* - dispatcher of all blocks
   * *finisher*  - listener of external shutdown/exit events
   * *connector* - connects/reconnects with server, provides this
