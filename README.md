@@ -1,7 +1,7 @@
 ![](_logo/logo.png)
 
-# sputnik [![GoDev](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white)](https://pkg.go.dev/github.com/g41797/sputnik)
-sputnik is tiny golang framework for building of **satellite** or as it's now fashionable to say **side-car** processes.
+# sputnik [![GoDev](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white)](https://pkg.go.dev/github.com/g41797/sputnik) [![Wikipedia](https://img.shields.io/badge/Wikipedia-%23000000.svg?style=for-the-badge&logo=wikipedia&logoColor=white)](https://en.wikipedia.org/wiki/Sputnik_1)
+**sputnik** is tiny golang framework for building of **satellite** or as it's now fashionable to say **side-car** processes.
 
 ##  What do satellite processes have in common?
 The same sometimes boring flow:
@@ -49,7 +49,7 @@ All this with minimal code size - actually the size of README and tests far exce
 
 
 ## Less You Know, the Better You Sleep
-sputnik doesn't use any server information and only assumes that server configuration and connection
+sputnik doesn't use any server information and only assumes that *server configuration* and *server connection*
 are required for functioning. 
 
 ### Server Configuration
@@ -72,24 +72,20 @@ type ServerConnection any
 For implementation of connect/disconnect/server health flow, sputnik uses supplied by caller implementation of following interface:
 ```go
 type ServerConnector interface {
-	/*
-  Connects to the server and return connection to server
-	If connection failed, returns error.
-	' Connect' for already connected
-	and still not brocken connection should
-	return the same value returned in previous
-	successful call(s) and nil error
-	*/
-  Connect(config ServerConfiguration) (conn ServerConnection, err error)
+	// Connects to the server and return connection to server
+	// If connection failed, returns error.
+	// ' Connect' for already connected
+	// and still not brocken connection should
+	// return the same value returned in previous
+	// successful call(s) and nil error
+	Connect(config ServerConfiguration) (conn ServerConnection, err error)
 
-  /*
-	Returns false if
-	  - was not connected at all
-	  - was connected, but connection is brocken
-	True returned if
-	  - connected and connection is alive
-	*/
-  IsConnected() bool
+	// Returns false if
+	//  - was not connected at all
+	//  - was connected, but connection is brocken
+	// True returned if
+	//  - connected and connection is alive
+	IsConnected() bool
 
 	// If connection is alive closes it
 	Disconnect()
@@ -246,6 +242,47 @@ type OnMsg func(msg Msg)
 
 **UNLIKE OTHER CALLBACKS, OnMsg CALLED SEQUENTIALLY ONE BY ONE FROM THE SAME DEDICATED GOROUTINE**. Frankly speaking - you have the queue of messages.
 
+### Block creation
+
+Developer supplies *BlockFactory* function:
+```go
+type BlockFactory func() *Block
+```
+*BlockFactory* registered in the process via RegisterBlockFactory:
+```go
+func RegisterBlockFactory(blockName string, blockFactory BlockFactory)
+```
+Use *init()* for this registration:
+```go
+func init() { // Registration of finisher block factory
+	RegisterBlockFactory(DefaultFinisherName, finisherBlockFactory)
+}
+```
+
+Where finisherBlockFactory is :
+```go
+func finisherBlockFactory() *Block {
+	finisher := new(finisher)
+	block := NewBlock(
+		WithInit(finisher.init),
+		WithRun(finisher.run),
+		WithFinish(finisher.finish),
+		WithOnMsg(finisher.debug))
+	return block
+}
+```
+You can see that factory called *NewBlock* function using [functional options pattern](https://golang.cafe/blog/golang-functional-options-pattern.html):
+
+List of options:
+```go
+WithInit(f Init)
+WithFinish(f Finish)
+WithRun(f Run)
+WithOnConnect(f OnServerConnect)
+WithOnDisConnect(f OnServerDisconnect)
+WithOnMsg(f OnMsg)
+```
+where *f* is related callback/hook
 
 
 ### Eats own dog food
