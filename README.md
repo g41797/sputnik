@@ -411,9 +411,9 @@ on different go-routines.
 
 ## Never Asked Questions
 
-- [I'd like to create stand alone process without any server. Is it possible?](#i'd-like-to-create-stand-alone-process-without-any-server-is-it-possible)
-- [I'd like to embed sputnik to my process? Is it possible?](#i'd-like-to-embed-sputnik-to-my-process-is-it-possible)
-- [You wrote that *finisher* can be replaced. For what?](#you-wrote-that-*finisher*-can-be-replaced-for-what)
+- [I'd like to create stand alone process without any server. Is it possible?](#id-like-to-create-stand-alone-process-without-any-server-is-it-possible)
+- [I'd like to embed sputnik to my process? Is it possible?](#id-like-to-embed-sputnik-to-my-process-is-it-possible)
+- [You wrote that *finisher* can be replaced. For what?](#you-wrote-that-finisher-can-be-replaced-for-what)
 
 ### I'd like to create stand alone process without any server? Is it possible?
 
