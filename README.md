@@ -417,7 +417,7 @@ on different go-routines.
 
 ### I'd like to create stand alone process without any server? Is it possible?
 
-*WithConnector* option of sputnik creation is optional. Don't use it and sputnik will not run any server connector.
+Don't use *WithConnector* option and sputnik will not run any server connector.
 But for this case your blocks should not have  *OnServerConnect* and *OnServerDisconnect* callbacks.
 
 ### I'd like to embed sputnik to my process? Is it possible?
