@@ -325,7 +325,7 @@ type BlockController interface {
 }
 ```
 
-Actually except send message to itself (via Send), nothing to do with own BlockController except:
+Main usage of own BlockController:
 * get BlockController of another block
   * send message to this block of
   * call callback on this block
