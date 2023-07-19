@@ -325,11 +325,10 @@ type BlockController interface {
 }
 ```
 
-Of course except send message to itself (via Send), nothing to do with own BlockController.
-Typical usage of own BlockController:
+Actually except send message to itself (via Send), nothing to do with own BlockController except:
 * get BlockController of another block
-* send message or
-* call callback
+  * send message to this block of
+  * call callback on this block
 
 Example 1 - how 'finisher' informs 'initiator' about process termination:
 ```go
@@ -406,7 +405,28 @@ This call is synchronous. sputnik continues to run on current goroutine till
 * process termination (it means that launch may be last line in main)
 * call of second returned function
 
-Of course, in order to use kill(ShootDown of sputnik) function, you should use another goroutine.
+In order to use kill(ShootDown of sputnik) function, launch and kill should run
+on different go-routines.
+
+
+## Never Asked Questions
+
+- [I'd like to create stand alone process without any server. Is it possible?](#i'd-like-to-create-stand-alone-process-without-any-server-is-it-possible)
+- [I'd like to embed sputnik to my process? Is it possible?](#i'd-like-to-embed-sputnik-to-my-process-is-it-possible)
+- [You wrote that *finisher* can be replaced. For what?](#you-wrote-that-*finisher*-can-be-replaced-for-what)
+
+### I'd like to create stand alone process without any server? Is it possible?
+
+*WithConnector* option of sputnik creation is optional. Don't use it and sputnik will not run any server connector.
+But for this case your blocks should not have  *OnServerConnect* and *OnServerDisconnect* callbacks.
+
+### I'd like to embed sputnik to my process? Is it possible?
+
+Of course, supply *ServerConnector* for in-proc communication.
+
+### You wrote that *finisher* can be replaced. For what?
+
+For example in case above, you will need to coordinate exit with code of the host.
 
 ## Contributing
 
