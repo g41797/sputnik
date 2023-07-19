@@ -1,6 +1,6 @@
 ![](_logo/logo.png)
 
-# sputnik [![GoDev](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white)](https://pkg.go.dev/github.com/g41797/sputnik) [![Wikipedia](https://img.shields.io/badge/Wikipedia-%23000000.svg?style=for-the-badge&logo=wikipedia&logoColor=white)](https://en.wikipedia.org/wiki/Sputnik_1)
+# sputnik [![GoDev](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white)](https://pkg.go.dev/github.com/g41797/sputnik) [![Wiki](https://img.shields.io/badge/Wikipedia-%23000000.svg?style=for-the-badge&logo=wikipedia&logoColor=white)](https://en.wikipedia.org/wiki/Sputnik_1)
 **sputnik** is tiny golang framework for building of **satellite** or as it's now fashionable to say **side-car** processes.
 
 ##  What do satellite processes have in common?
@@ -115,7 +115,16 @@ This prefix is used by sputnik for house-keeping values.
 
 
 ## sputnik's building blocks
-Building block of sputnik called (of-course - do you remember *simplicity*?)   **Block**.
+sputnik based process consists of *infrastructure* and *application* **Blocks**
+
+
+### Eats own dog food
+Infrastructure **Blocks**:
+  * *initiator* - dispatcher of all blocks
+  * *finisher*  - listener of external shutdown/exit events
+  * *connector* - connects/reconnects with server, provides this
+    information to another blocks
+
 
 ### Block identity
 Every Block has descriptor:
@@ -172,9 +181,6 @@ Rules of initialization:
 If initialization failed (returned error != nil)
  * initialization is terminated
  * already initialized blocks are finished in opposite to init order.
-
-
- We will talk later about *conf* (configuration). 
 
 #### Run
 
@@ -271,7 +277,7 @@ func finisherBlockFactory() *Block {
 	return block
 }
 ```
-You can see that factory called *NewBlock* function using [functional options pattern](https://golang.cafe/blog/golang-functional-options-pattern.html):
+You can see that factory called *NewBlock function* using [functional options pattern](https://golang.cafe/blog/golang-functional-options-pattern.html):
 
 List of options:
 ```go
@@ -284,10 +290,130 @@ WithOnMsg(f OnMsg)
 ```
 where *f* is related callback/hook
 
+### Block control
+Block control is provided via interface *BlockController*. Block gets own controller as parameter of **Run**.
+```go
+type BlockController interface {
+	//
+	// Get controller of block by block's responsibility
+	// Example - get BlockController of initiator:
+	// initbl, ok := bc.Controller(sputnik.InitiatorResponsibility)
+	//
+	Controller(resp string) (bc BlockController, exists bool)
 
-### Eats own dog food
-sputnik itself consists of 3 **Blocks**:
-  * *initiator* - dispatcher of all blocks
-  * *finisher*  - listener of external shutdown/exit events
-  * *connector* - connects/reconnects with server, provides this
-    information to another blocks
+	// Identification of controlled block
+	Descriptor() BlockDescriptor
+
+	// Asynchronously send message to controlled block
+	// true is returned if
+	//  - controlled block has OnMsg callback
+	//  - recipient of messages was not cancelled
+	//  - msg != nil
+	Send(msg Msg) bool
+
+	// Asynchronously notify controlled block about server status
+	// true is returned if if controlled block has OnServerConnect callback
+	ServerConnected(sc ServerConnection) bool
+
+	// Asynchronously notify controlled block about server status
+	// true is returned if controlled block has OnServerDisconnect callback
+	ServerDisconnected() bool
+
+	// Asynchronously call Finish callback of controlled block
+	//
+	Finish()
+}
+```
+
+Of course except send message to itself (via Send), nothing to do with own BlockController.
+Typical usage of own BlockController:
+* get BlockController of another block
+* send message or
+* call callback
+
+Example 1 - how 'finisher' informs 'initiator' about process termination:
+```go
+	ibc, _ := fns.owncontroller.Controller("initiator")
+	ibc.Finish()
+```
+Example 2 - how 'initiator' sends setup settings to 'connector':
+```go
+	setupMsg := make(Msg)
+	setupMsg["__connector"] = connectorPlugin
+	setupMsg["__timeout"] = 10000
+
+	connController.Send(setupMsg)
+```
+
+## sputnik flight
+
+### Create sputnik
+
+Use *NewSputnik function* for creation of sputnik.
+It supports following options:
+```go
+WithConfFactory(cf ConfFactory)                      // Set Configuration Factory. Mandatory
+WithAppBlocks(appBlocks []BlockDescriptor)           // List of descriptors for application blocks
+WithBlockFactories(blkFacts BlockFactories)          // List of block factories. Optional. If was not set, used list of factories registrated during init()
+WithFinisher(fbd BlockDescriptor)                    // Descriptor of finisher. Optional. If was not set, default supplied finished will be used.
+WithConnector(cnt ServerConnector, to time.Duration) // Server Connector plug-in and timeout for connect/reconnect. Optional
+```
+
+Example: creation of sputnik for tests:
+```go
+	testSputnik, _ := sputnik.NewSputnik(
+		sputnik.WithConfFactory(dumbConf),
+		sputnik.WithAppBlocks(blkList),
+		sputnik.WithBlockFactories(tb.factories()),
+		sputnik.WithConnector(&tb.conntr, tb.to),
+	)
+```
+
+### Preparing for flight
+
+After creation of sputnik, call *Prepare*:
+```go
+// Creates and initializes all blocks.
+//
+// If creation and initialization of any block failed:
+//
+//   - Finish is called on all already initialized blocks
+//
+//   - Order of finish - reversal of initialization
+//
+//     = Returned error describes reason of the failure
+//
+// Otherwise returned 2 functions for sputnik management:
+//
+//   - lfn - Launch of the sputnik , exit from this function will be
+//     after signal for shutdown of the process  or after call of
+//     second returned function (see below)
+//
+//   - st - ShootDown of sputnik - abort flight
+func (sputnik Sputnik) Prepare() (lfn Launch, st ShootDown, err error) 
+```
+
+Example :
+```go
+	launch, kill, err := testSputnik.Prepare()
+```
+
+### sputnik launch
+
+Very simple - just call returned *launch* function.
+
+This call is synchronous. sputnik continues to run on current goroutine till
+* process termination (it means that launch may be last line in main)
+* call of second returned function
+
+Of course, in order to use kill(ShootDown of sputnik) function, you should use another goroutine.
+
+## Contributing
+
+Feel free to report bugs and suggest improvements.
+
+## License
+
+[MIT](LICENSE)
+
+
