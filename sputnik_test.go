@@ -89,8 +89,8 @@ func TestRun(t *testing.T) {
 
 	// Simulate ServerDisconnect
 	tb.conntr.setState(false)
-	if !tb.expect(3, "serverDisConnected") {
-		t.Errorf("Wrong processing of serverDisConnected")
+	if !tb.expect(3, "serverDisconnected") {
+		t.Errorf("Wrong processing of serverDisconnected")
 	}
 
 	tb.kill()

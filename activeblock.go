@@ -5,7 +5,7 @@ import "fmt"
 type activeBlock struct {
 	descriptor BlockDescriptor
 	block      *Block
-	controller BlockController
+	controller *controller
 }
 
 func (abl *activeBlock) init(cnf ServerConfiguration) error {

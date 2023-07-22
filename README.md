@@ -185,7 +185,7 @@ If initialization failed (returned error != nil)
 #### Run
 
 ```go
-type Run func(controller BlockController)
+type Run func(communicator BlockCommunicator)
 ```
 
 Run callback is executed by sputnik
@@ -194,7 +194,7 @@ Run callback is executed by sputnik
 
 You can consider Run as *main thread* of the block.
 
-Parameter of Run - **BlockController** may be used by block for negotiation with another blocks of the process.
+Parameter of Run - **BlockCommunicator** may be used by block for negotiation with another blocks of the process.
 
 #### Finish
 
@@ -281,25 +281,28 @@ You can see that factory called *NewBlock function* using [functional options pa
 
 List of options:
 ```go
+// Mandatory:
 WithInit(f Init)
 WithFinish(f Finish)
 WithRun(f Run)
+
+// Optional:
 WithOnConnect(f OnServerConnect)
-WithOnDisConnect(f OnServerDisconnect)
+WithOnDisconnect(f OnServerDisconnect)
 WithOnMsg(f OnMsg)
 ```
 where *f* is related callback/hook
 
 ### Block control
-Block control is provided via interface *BlockController*. Block gets own controller as parameter of **Run**.
+Block control is provided via interface *BlockCommunicator*. Block gets own communicator as parameter of **Run**.
 ```go
-type BlockController interface {
+type BlockCommunicator interface {
 	//
-	// Get controller of block by block's responsibility
-	// Example - get BlockController of initiator:
-	// initbl, ok := bc.Controller(sputnik.InitiatorResponsibility)
+	// Get communicator of block by block's responsibility
+	// Example - get BlockCommunicator of initiator:
+	// initbl, ok := bc.Communicator(sputnik.InitiatorResponsibility)
 	//
-	Controller(resp string) (bc BlockController, exists bool)
+	Communicator(resp string) (bc BlockCommunicator, exists bool)
 
 	// Identification of controlled block
 	Descriptor() BlockDescriptor
@@ -310,38 +313,19 @@ type BlockController interface {
 	//  - recipient of messages was not cancelled
 	//  - msg != nil
 	Send(msg Msg) bool
-
-	// Asynchronously notify controlled block about server status
-	// true is returned if if controlled block has OnServerConnect callback
-	ServerConnected(sc ServerConnection) bool
-
-	// Asynchronously notify controlled block about server status
-	// true is returned if controlled block has OnServerDisconnect callback
-	ServerDisconnected() bool
-
-	// Asynchronously call Finish callback of controlled block
-	//
-	Finish()
 }
 ```
+Main usage of own BlockCommunicator:
+* get BlockCommunicator of another block
+* send message to this block
 
-Main usage of own BlockController:
-* get BlockController of another block
-  * send message to this block of
-  * call callback on this block
-
-Example 1 - how 'finisher' informs 'initiator' about process termination:
-```go
-	ibc, _ := fns.owncontroller.Controller("initiator")
-	ibc.Finish()
-```
-Example 2 - how 'initiator' sends setup settings to 'connector':
+Example: *initiator* sends setup settings to *connector*:
 ```go
 	setupMsg := make(Msg)
 	setupMsg["__connector"] = connectorPlugin
 	setupMsg["__timeout"] = 10000
 
-	connController.Send(setupMsg)
+	connCommunicator.Send(setupMsg)
 ```
 
 ## sputnik flight

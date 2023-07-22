@@ -67,8 +67,8 @@ func (tb *testBlocks) expect(n int, name string) bool {
 // Use this pattern in real application for
 // negotiation between blocks
 func (tb *testBlocks) sendTo(resp string, msg sputnik.Msg) bool {
-	cn := tb.dbl[0].controller
-	bc, exists := cn.Controller(resp)
+	cn := tb.dbl[0].communicator
+	bc, exists := cn.Communicator(resp)
 
 	if !exists {
 		return false
@@ -77,8 +77,8 @@ func (tb *testBlocks) sendTo(resp string, msg sputnik.Msg) bool {
 	return sok
 }
 
-func (tb *testBlocks) mainCntrl() sputnik.BlockController {
-	mcn, _ := tb.dbl[0].controller.Controller(sputnik.InitiatorResponsibility)
+func (tb *testBlocks) mainCntrl() sputnik.BlockCommunicator {
+	mcn, _ := tb.dbl[0].communicator.Communicator(sputnik.InitiatorResponsibility)
 	return mcn
 }
 
@@ -140,7 +140,7 @@ func (tb *testBlocks) dbFact() *sputnik.Block {
 
 		sputnik.WithOnMsg(dmb.eventReceived),
 		sputnik.WithOnConnect(dmb.serverConnected),
-		sputnik.WithOnDisConnect(dmb.serverDisConnected),
+		sputnik.WithOnDisconnect(dmb.serverDisconnected),
 	)
 }
 

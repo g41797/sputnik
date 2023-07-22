@@ -7,8 +7,8 @@ import (
 
 // Satellite block
 type dumbBlock struct {
-	// Block controller
-	controller sputnik.BlockController
+	// Block communicator
+	communicator sputnik.BlockCommunicator
 	// Main queue of test
 	q *kissngoqueue.Queue[sputnik.Msg]
 	// Used for synchronization
@@ -27,11 +27,10 @@ func (dmb *dumbBlock) init(cnf sputnik.ServerConfiguration) error {
 }
 
 // Run:
-func (dmb *dumbBlock) run(bc sputnik.BlockController) {
+func (dmb *dumbBlock) run(bc sputnik.BlockCommunicator) {
 
-	// Save controller for further communication
-	// with blocks
-	dmb.controller = bc
+	// Save for further communication with blocks
+	dmb.communicator = bc
 
 	dmb.done = make(chan struct{})
 	defer close(dmb.done)
@@ -73,10 +72,10 @@ func (dmb *dumbBlock) serverConnected(connection sputnik.ServerConnection) {
 }
 
 // OnServerDisconnect:
-func (dmb *dumbBlock) serverDisConnected() {
+func (dmb *dumbBlock) serverDisconnected() {
 	//Inform test about event
 	m := make(sputnik.Msg)
-	m["__name"] = "serverDisConnected"
+	m["__name"] = "serverDisconnected"
 	dmb.send(m)
 	return
 }

@@ -33,8 +33,8 @@ type Init func(conf ServerConfiguration) error
 // After successful initialization of ALL blocks, sputnik creates goroutine and calls Run
 // Other callbacks will be executed on another goroutines
 // After Run block is allowed to negotiate with another blocks of the process
-// via BlockController
-type Run func(controller BlockController)
+// via BlockCommunicator
+type Run func(communicator BlockCommunicator)
 
 // Finish callback is executed by sputnik:
 //   - during initialization  of the process if init of another block failed (init == true)
@@ -116,7 +116,7 @@ func WithOnConnect(f OnServerConnect) BlockOption {
 	}
 }
 
-func WithOnDisConnect(f OnServerDisconnect) BlockOption {
+func WithOnDisconnect(f OnServerDisconnect) BlockOption {
 	return func(b *Block) {
 		b.onDisconnect = f
 	}
@@ -140,15 +140,15 @@ func (bl *Block) isValid(oncdenabled bool) bool {
 	return bl.init != nil && bl.run != nil && bl.finish != nil
 }
 
-// BlockController provides possibility for negotiation between blocks
-// Block gets own controller as parameter of Run
-type BlockController interface {
+// BlockCommunicator provides possibility for negotiation between blocks
+// Block gets own communicator as parameter of Run
+type BlockCommunicator interface {
 	//
-	// Get controller of block by block's responsibility
-	// Example - get BlockController of initiator:
-	// initbl, ok := bc.Controller(sputnik.InitiatorResponsibility)
+	// Get communicator of block by block's responsibility
+	// Example - get BlockCommunicator of initiator:
+	// initbl, ok := bc.Communicator(sputnik.InitiatorResponsibility)
 	//
-	Controller(resp string) (bc BlockController, exists bool)
+	Communicator(resp string) (bc BlockCommunicator, exists bool)
 
 	// Identification of controlled block
 	Descriptor() BlockDescriptor
@@ -159,16 +159,4 @@ type BlockController interface {
 	//  - recipient of messages was not cancelled
 	//  - msg != nil
 	Send(msg Msg) bool
-
-	// Asynchronously notify controlled block about server status
-	// true is returned if if controlled block has OnServerConnect callback
-	ServerConnected(sc ServerConnection) bool
-
-	// Asynchronously notify controlled block about server status
-	// true is returned if controlled block has OnServerDisconnect callback
-	ServerDisconnected() bool
-
-	// Asynchronously call Finish callback of controlled block
-	//
-	Finish()
 }

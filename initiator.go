@@ -7,7 +7,7 @@ import (
 )
 
 type initiator struct {
-	lock          sync.Mutex
+	sync.Mutex
 	sputnik       Sputnik
 	actBlks       activeBlocks
 	q             *kissngoqueue.Queue[Msg]
@@ -24,8 +24,6 @@ func (inr *initiator) factory() *Block {
 		WithInit(inr.init),
 		WithRun(inr.run),
 		WithFinish(inr.finish),
-		WithOnConnect(inr.serverConnected),
-		WithOnDisConnect(inr.serverDisConnected),
 		WithOnMsg(inr.msgReceived),
 	)
 }
@@ -88,7 +86,7 @@ func (inr *initiator) setupConnector() {
 	return
 }
 
-func (inr *initiator) run(_ BlockController) {
+func (inr *initiator) run(_ BlockCommunicator) {
 
 	inr.done = make(chan struct{})
 	defer close(inr.done)
@@ -113,8 +111,8 @@ func (inr *initiator) run(_ BlockController) {
 }
 
 func (inr *initiator) activate() bool {
-	inr.lock.Lock()
-	defer inr.lock.Unlock()
+	inr.Lock()
+	defer inr.Unlock()
 
 	if inr.abortStarted {
 		return false
@@ -122,7 +120,7 @@ func (inr *initiator) activate() bool {
 
 	// Start active blacks on own goroutines
 	for _, abl := range inr.actBlks[1:] {
-		go func(fr Run, bc BlockController) {
+		go func(fr Run, bc BlockCommunicator) {
 			fr(bc)
 		}(abl.block.run, abl.controller)
 	}
@@ -131,19 +129,12 @@ func (inr *initiator) activate() bool {
 	return true
 }
 
-const (
-	finishMsg   = "__finish"
-	finishedMsg = "__finished"
-)
-
 func (inr *initiator) finish(init bool) {
 	if init {
 		return
 	}
 
-	m := make(Msg)
-	m["__name"] = finishMsg
-	inr.q.PutMT(m)
+	inr.q.PutMT(FinishMsg())
 	return
 }
 
@@ -152,16 +143,16 @@ func (inr *initiator) msgReceived(msg Msg) {
 	return
 }
 
-func (inr *initiator) serverConnected(connection ServerConnection) {
+func (inr *initiator) onServerConnected(connection ServerConnection) {
 	for _, abl := range inr.actBlks[1:] {
 		abl.controller.ServerConnected(connection)
 	}
 	return
 }
 
-func (inr *initiator) serverDisConnected() {
+func (inr *initiator) onserverDisconnected() {
 	for _, abl := range inr.actBlks[1:] {
-		abl.controller.ServerDisconnected()
+		abl.controller.serverDisconnected()
 	}
 	return
 }
@@ -189,8 +180,8 @@ func (inr *initiator) abort() {
 }
 
 func (inr *initiator) finishBeforeLaunch() bool {
-	inr.lock.Lock()
-	defer inr.lock.Unlock()
+	inr.Lock()
+	defer inr.Unlock()
 
 	if inr.runStarted {
 		return false
@@ -236,6 +227,10 @@ func (inr *initiator) processMsg(m Msg) {
 		inr.processFinish()
 	case finishedMsg:
 		inr.processFinished()
+	case serverConnectedMsg:
+		inr.onServerConnected(m["__conn"])
+	case serverDisconnectedMsg:
+		inr.onserverDisconnected()
 	}
 
 	return
@@ -260,4 +255,36 @@ func (inr *initiator) processFinished() {
 		inr.q.CancelMT() // stop main loop
 	}
 	return
+}
+
+const (
+	finishMsg             = "finish"
+	finishedMsg           = "finished"
+	serverConnectedMsg    = "serverConnected"
+	serverDisconnectedMsg = "serverDisconnected"
+)
+
+func FinishMsg() Msg {
+	msg := make(Msg)
+	msg["__name"] = finishMsg
+	return msg
+}
+
+func FinishedMsg() Msg {
+	msg := make(Msg)
+	msg["__name"] = finishedMsg
+	return msg
+}
+
+func serverconnectedmsg(conn ServerConnection) Msg {
+	msg := make(Msg)
+	msg["__name"] = serverConnectedMsg
+	msg["__conn"] = conn
+	return msg
+}
+
+func serverdisconnectedmsg() Msg {
+	msg := make(Msg)
+	msg["__name"] = serverDisconnectedMsg
+	return msg
 }

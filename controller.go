@@ -1,6 +1,6 @@
 package sputnik
 
-var _ BlockController = &controller{}
+var _ BlockCommunicator = &controller{}
 
 type controller struct {
 	descriptor BlockDescriptor
@@ -19,7 +19,7 @@ func attachController(resp string, actBlks activeBlocks) {
 	abl.controller = cn
 }
 
-func (cn *controller) Controller(resp string) (bc BlockController, exists bool) {
+func (cn *controller) Communicator(resp string) (bc BlockCommunicator, exists bool) {
 
 	abl, exists := cn.actBlks.getABl(resp)
 
@@ -57,7 +57,7 @@ func (cn *controller) ServerConnected(sc ServerConnection) bool {
 	return true
 }
 
-func (cn *controller) ServerDisconnected() bool {
+func (cn *controller) serverDisconnected() bool {
 	if cn.block.onDisconnect == nil {
 		return false
 	}
@@ -78,7 +78,7 @@ func (cn *controller) Finish() {
 	fm["__resp"] = resp
 
 	// Dedicate goroutine for finish of the block
-	go func(fn Finish, bc BlockController, m Msg, pr *msgProcessor) {
+	go func(fn Finish, bc BlockCommunicator, m Msg, pr *msgProcessor) {
 		fn(false)
 		if pr != nil {
 			pr.cancel()

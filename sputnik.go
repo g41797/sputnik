@@ -99,7 +99,7 @@ type Launch func() error
 // sputnik shooter
 type ShootDown func()
 
-// Prepare sputnik for launch
+// Creates and initializes all blocks.
 //
 // If creation and initialization of any block failed:
 //

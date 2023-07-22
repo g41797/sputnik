@@ -53,8 +53,8 @@ type connector struct {
 	cnr ServerConnector
 	to  time.Duration
 
-	cbc BlockController
-	ibc BlockController
+	cbc BlockCommunicator
+	ibc BlockCommunicator
 
 	bgfin  chan struct{}
 	endfin chan struct{}
@@ -73,11 +73,11 @@ func (c *connector) init(conf ServerConfiguration) error {
 	return nil
 }
 
-func (c *connector) run(self BlockController) {
+func (c *connector) run(self BlockCommunicator) {
 	defer close(c.mc)
 
 	c.cbc = self
-	c.ibc, _ = self.Controller(InitiatorResponsibility)
+	c.ibc, _ = self.Communicator(InitiatorResponsibility)
 
 	c.endfin = make(chan struct{}, 1)
 	defer close(c.endfin)
@@ -196,14 +196,14 @@ func (c *connector) nop() {
 }
 
 func (c *connector) notifyConnected(conn any) {
-	c.ibc.ServerConnected(conn)
+	c.ibc.Send(serverconnectedmsg((conn)))
 	c.connected = true
 	c.next = c.checkConnection
 	return
 }
 
 func (c *connector) notifyDisonnected() {
-	c.ibc.ServerDisconnected()
+	c.ibc.Send(serverdisconnectedmsg())
 	c.connected = false
 	c.next = c.connect
 	return
