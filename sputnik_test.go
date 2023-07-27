@@ -82,13 +82,13 @@ func TestRun(t *testing.T) {
 	time.Sleep(1 * time.Second)
 
 	// Simulate ServerConnect
-	tb.conntr.setState(true)
+	tb.conntr.SetState(true)
 	if !tb.expect(3, "serverConnected") {
 		t.Errorf("Wrong processing of serverconnected")
 	}
 
 	// Simulate ServerDisconnect
-	tb.conntr.setState(false)
+	tb.conntr.SetState(false)
 	if !tb.expect(3, "serverDisconnected") {
 		t.Errorf("Wrong processing of serverDisconnected")
 	}

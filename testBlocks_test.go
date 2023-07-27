@@ -20,14 +20,14 @@ type testBlocks struct {
 	// Signalling channel
 	done chan struct{}
 	// ServerConnector
-	conntr dummyConnector
+	conntr sputnik.DummyConnector
 	to     time.Duration
 }
 
 func NewTestBlocks() *testBlocks {
 	tb := new(testBlocks)
 	tb.q = kissngoqueue.NewQueue[sputnik.Msg]()
-	tb.conntr = dummyConnector{}
+	tb.conntr = sputnik.DummyConnector{}
 	tb.to = time.Millisecond * 100
 	return tb
 }
