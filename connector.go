@@ -11,7 +11,7 @@ type ServerConnector interface {
 	// and still not brocken connection should
 	// return the same value returned in previous
 	// successful call(s) and nil error
-	Connect(config ServerConfiguration) (conn ServerConnection, err error)
+	Connect(cf ConfFactory) (conn ServerConnection, err error)
 
 	// Returns false if
 	//  - was not connected at all

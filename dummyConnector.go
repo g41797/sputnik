@@ -11,7 +11,7 @@ type DummyConnector struct {
 	connected bool
 }
 
-func (c *DummyConnector) Connect(config ServerConfiguration) (conn ServerConnection, err error) {
+func (c *DummyConnector) Connect(cf ConfFactory) (conn ServerConnection, err error) {
 	if !c.connected {
 		return nil, errors.New("connection failed")
 	}
