@@ -31,7 +31,7 @@ type finisher struct {
 	communicator BlockCommunicator
 }
 
-func (bl *finisher) init(conf ServerConfiguration) error {
+func (bl *finisher) init(_ ConfFactory) error {
 	return nil
 }
 

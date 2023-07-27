@@ -21,7 +21,7 @@ type dumbBlock struct {
 // dumbBlock support all callbacks of Block:
 //
 // Init
-func (dmb *dumbBlock) init(cnf sputnik.ServerConfiguration) error {
+func (dmb *dumbBlock) init(_ sputnik.ConfFactory) error {
 	dmb.stop = make(chan struct{}, 1)
 	return nil
 }

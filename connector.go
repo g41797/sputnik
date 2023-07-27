@@ -47,7 +47,7 @@ func connectorBlockFactory() *Block {
 type doIt func()
 
 type connector struct {
-	conf ServerConfiguration
+	cf ConfFactory
 
 	mc  chan Msg
 	cnr ServerConnector
@@ -63,9 +63,9 @@ type connector struct {
 	connected bool
 }
 
-func (c *connector) init(conf ServerConfiguration) error {
+func (c *connector) init(cf ConfFactory) error {
 
-	c.conf = conf
+	c.cf = cf
 	c.next = c.connect
 	c.mc = make(chan Msg, 1)
 	c.bgfin = make(chan struct{}, 1)
@@ -156,7 +156,7 @@ func (c *connector) connect() {
 	}
 
 	if !c.connected {
-		conn, err := c.cnr.Connect(c.conf)
+		conn, err := c.cnr.Connect(c.cf)
 
 		if err != nil {
 			return

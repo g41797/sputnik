@@ -9,7 +9,7 @@ import (
 type ServerConfiguration any
 
 // Configuration Factory
-type ConfFactory func() ServerConfiguration
+type ConfFactory func(confName string, result any) error
 
 type Sputnik struct {
 	// Configuration factory

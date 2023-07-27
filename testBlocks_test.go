@@ -152,7 +152,7 @@ var blkList []sputnik.BlockDescriptor = []sputnik.BlockDescriptor{
 }
 
 // Configuration factory:
-func dumbConf() sputnik.ServerConfiguration { return nil }
+func dumbConf(confName string, result any) error { return nil }
 
 func dumbSputnik(tb *testBlocks) sputnik.Sputnik {
 	sp, _ := sputnik.NewSputnik(

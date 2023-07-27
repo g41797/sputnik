@@ -28,7 +28,7 @@ const (
 // Some rules :
 //   - don't run hard processing within Init
 //   - don't work with server till call of OnServerConnect
-type Init func(conf ServerConfiguration) error
+type Init func(cf ConfFactory) error
 
 // After successful initialization of ALL blocks, sputnik creates goroutine and calls Run
 // Other callbacks will be executed on another goroutines

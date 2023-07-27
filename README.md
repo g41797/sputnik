@@ -1,7 +1,7 @@
 ![](_logo/logo.png)
 
 # sputnik [![GoDev](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white)](https://pkg.go.dev/github.com/g41797/sputnik) [![Wiki](https://img.shields.io/badge/Wikipedia-%23000000.svg?style=for-the-badge&logo=wikipedia&logoColor=white)](https://en.wikipedia.org/wiki/Sputnik_1)
-**sputnik** is tiny golang framework for building of **satellite** or as it's now fashionable to say **side-car** processes.
+**sputnik** is tiny golang framework for building of **satellite** or as it's now fashionable to say **sidecar** processes.
 
 ##  What do satellite processes have in common?
 The same sometimes boring flow:
@@ -33,14 +33,14 @@ sputnik forces modular-monolith design:
 
 ### Satellites blueprint
 
-sputnik supports common for all satellite processes functionality::
+sputnik supports common for all satellite processes functionality:
 * Deterministic initialization
 * Connect/Reconnect flow
 * Server heartbeat
 * Convenient negotiation between blocks of the process
 * Graceful shutdown
 
-All this with minimal code size - actually the size of README and tests far exceeds size of sputnik's code.
+All this with minimal code size - actually the size of README and tests far exceeds the size of sputnik's code.
 
 ## Why Sputnik?
 * Launched by the Soviet Union on 4 October 1957, **Sputnik** became the first **satellite** in space and changed the world forever.
@@ -59,8 +59,12 @@ type ServerConfiguration any
 
 In order to get configuration and provide it to the process, sputnik uses *Configuration Factory*:
 ```go
-type ConfFactory func() ServerConfiguration
+type ConfFactory func(confName string, result any) error
 ```
+where 
+- confName - name of configuration
+- result - unmarshaled configuration(usually struct) 
+
 
 This function should be supplied by caller of sputnik during initialization. We will talk about initialization later.
 
@@ -168,7 +172,7 @@ You can see that these callbacks reflect life cycle/flow of satellite process.
 #### Init
 
 ```go
-type Init func(conf any) error
+type Init func(cf ConfFactory) error
 ```
 
 Init callback is executed by sputnik once during initialization.

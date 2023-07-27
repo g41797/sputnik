@@ -8,8 +8,8 @@ type activeBlock struct {
 	controller *controller
 }
 
-func (abl *activeBlock) init(cnf ServerConfiguration) error {
-	err := abl.block.init(cnf)
+func (abl *activeBlock) init(cf ConfFactory) error {
+	err := abl.block.init(cf)
 
 	if err != nil {
 		err = fmt.Errorf("Init of [%s,%s] failed with error %s", abl.descriptor.Name, abl.descriptor.Responsibility, err.Error())

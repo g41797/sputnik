@@ -28,7 +28,7 @@ func (inr *initiator) factory() *Block {
 	)
 }
 
-func (inr *initiator) init(_ ServerConfiguration) error {
+func (inr *initiator) init(_ ConfFactory) error {
 
 	appBlks, err := inr.sputnik.createActiveBlocks()
 	if err != nil {
@@ -38,7 +38,7 @@ func (inr *initiator) init(_ ServerConfiguration) error {
 	ibs := make(activeBlocks, 0)
 
 	for _, abl := range appBlks {
-		err = abl.init(inr.sputnik.cnfFact())
+		err = abl.init(inr.sputnik.cnfFact)
 		if err != nil {
 			break
 		}
