@@ -3,9 +3,9 @@
 # “Everything should be made as simple as possible...” 
 
 **sputnik** is tiny golang framework for building of **satellite** or as it's now fashionable to say **sidecar** processes.
-
+<p align="center">
 [![GoDev](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white)](https://pkg.go.dev/github.com/g41797/sputnik)[![Go](https://github.com/g41797/sputnik/actions/workflows/go.yml/badge.svg)](https://github.com/g41797/sputnik/actions/workflows/go.yml) [![Wiki](https://img.shields.io/badge/Wikipedia-%23000000.svg?style=for-the-badge&logo=wikipedia&logoColor=white)](https://en.wikipedia.org/wiki/Sputnik_1)
-
+</p>
 
 ##  What do satellite processes have in common?
 The same sometimes boring flow:
