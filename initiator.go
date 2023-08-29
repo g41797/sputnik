@@ -8,14 +8,16 @@ import (
 
 type initiator struct {
 	sync.Mutex
-	sputnik       Sputnik
-	actBlks       activeBlocks
-	q             *kissngoqueue.Queue[Msg]
-	runStarted    bool
-	abortStarted  bool
-	finishStarted bool
-	finishedBlks  int
-	done          chan struct{}
+	sputnik        Sputnik
+	actBlks        activeBlocks
+	q              *kissngoqueue.Queue[Msg]
+	runStarted     bool
+	abortStarted   bool
+	finishStarted  bool
+	finishedBlks   int
+	expectFinished int
+	done           chan struct{}
+	connector      *controller
 }
 
 // Factory of initiator:
@@ -74,12 +76,16 @@ func (inr *initiator) setupConnector() {
 		return
 	}
 
-	setupMsg := make(Msg)
+	cbl, ok := inr.actBlks.getABl(DefaultConnectorResponsibility)
+	if !ok {
+		return
+	}
 
+	inr.connector = cbl.controller
+
+	setupMsg := make(Msg)
 	setupMsg["__connector"] = connector
 	setupMsg["__timeout"] = to
-
-	cbl, _ := inr.actBlks.getABl(DefaultConnectorResponsibility)
 
 	cbl.controller.Send(setupMsg)
 
@@ -243,7 +249,11 @@ func (inr *initiator) processFinish() {
 	inr.finishStarted = true
 
 	for i := len(inr.actBlks) - 1; i > 0; i-- {
-		inr.actBlks[i].controller.Finish()
+		contr := inr.actBlks[i].controller
+		if contr != inr.connector {
+			contr.Finish()
+			inr.expectFinished += 1
+		}
 	}
 
 	inr.finishedBlks = 0
@@ -251,8 +261,15 @@ func (inr *initiator) processFinish() {
 
 func (inr *initiator) processFinished() {
 	inr.finishedBlks++
-	if inr.finishedBlks == len(inr.actBlks)-1 {
-		inr.q.CancelMT() // stop main loop
+	if inr.finishedBlks == inr.expectFinished {
+		if inr.connector == nil {
+			inr.q.CancelMT() // stop main loop
+			return
+		}
+		inr.finishedBlks = 0
+		inr.expectFinished = 1
+		inr.connector.Finish()
+		inr.connector = nil
 	}
 	return
 }
