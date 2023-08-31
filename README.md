@@ -401,7 +401,15 @@ This call is synchronous. sputnik continues to run on current goroutine till
 In order to use kill(ShootDown of sputnik) function, launch and kill should run
 on different go-routines.
 
+## Adding blocks to the build
 
+For adding blocks to the build use **blank imports**:
+```go
+import (
+	// Attach blocks packages to the process:
+	_ "github.com/memphisdev/memphis-protocol-adapter/pkg/syslogblocks"
+)
+```
 ## Never Asked Questions
 
 - [I'd like to create stand alone process without any server. Is it possible?](#id-like-to-create-stand-alone-process-without-any-server-is-it-possible)
