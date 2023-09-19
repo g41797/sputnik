@@ -1,2 +1,10 @@
+github.com/g41797/gonfig v1.0.1 h1:ywgkhF3SbNJuFN9Hlm9n7Lp+KxqeupkNmFObn2ZpWs8=
+github.com/g41797/gonfig v1.0.1/go.mod h1:5iL4oHFpYi+c7AE4D1dZnlBleJzM71dX6HZBhEELF90=
 github.com/g41797/kissngoqueue v0.1.5 h1:UrnpxbjOnTnKj/EqpbLA9LjhYkHjnLWMZQqsz3AOBG8=
 github.com/g41797/kissngoqueue v0.1.5/go.mod h1:c1mGfrNWfEP2cHeX04Iji8qYGQevvUmZw5SPZM5M9Cs=
+github.com/ghodss/yaml v1.0.0 h1:wQHKEahhL6wmXdzwWG11gIVCkOv05bNOh+Rxn0yngAk=
+github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
+gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=
+gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
+gopkg.in/yaml.v2 v2.4.0 h1:D8xgwECY7CYvx+Y2n4sBz93Jn9JRvxdiyyo8CTfuKaY=
+gopkg.in/yaml.v2 v2.4.0/go.mod h1:RDklbk79AGWmwhnvt/jBztapEOGDOx6ZbXqjP6csGnQ=
