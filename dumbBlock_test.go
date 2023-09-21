@@ -41,7 +41,7 @@ func (dmb *dumbBlock) run(bc sputnik.BlockCommunicator) {
 	// redirected OnMsg|OnConnect|etc
 	select {
 	case <-dmb.stop:
-		return
+		break
 	}
 
 	return
@@ -57,7 +57,7 @@ func (dmb *dumbBlock) finish(init bool) {
 
 	select {
 	case <-dmb.done: // Wait finish of Run
-		return
+		break
 	}
 	return
 }

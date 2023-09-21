@@ -1,11 +1,11 @@
-package sputnik_test
+package sidecar_test
 
 import (
 	"os"
 	"strconv"
 	"testing"
 
-	"github.com/g41797/sputnik"
+	"github.com/g41797/sputnik/sidecar"
 )
 
 type TestConf struct {
@@ -17,7 +17,7 @@ func TestJSON(t *testing.T) {
 
 	confFolderPath := "./_conf_test/"
 
-	cfact := sputnik.ConfigFactory(confFolderPath)
+	cfact := sidecar.ConfigFactory(confFolderPath)
 
 	expected := defaults()
 
@@ -32,7 +32,7 @@ func TestENV(t *testing.T) {
 
 	confFolderPath := "./_conf_test/"
 
-	cfact := sputnik.ConfigFactory(confFolderPath)
+	cfact := sidecar.ConfigFactory(confFolderPath)
 
 	expected := defaults()
 	expected.SECONDINT = 12345

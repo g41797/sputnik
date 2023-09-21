@@ -37,7 +37,7 @@ func (pr *msgProcessor) process() {
 	for {
 		msg, ok := pr.q.Get()
 		if !ok {
-			return
+			break
 		}
 		pr.fnc(msg)
 	}

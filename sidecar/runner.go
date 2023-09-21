@@ -1,4 +1,4 @@
-package sputnik
+package sidecar
 
 import (
 	"encoding/json"
@@ -7,9 +7,11 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/g41797/sputnik"
 )
 
-func Start(cntr ServerConnector) {
+func Start(cntr sputnik.ServerConnector) {
 
 	var confFolder string
 	flag.StringVar(&confFolder, "cf", "", "Path of folder with config files")
@@ -35,12 +37,12 @@ const brokerCheckTimeOut = time.Second
 
 type Runner struct {
 	// ShootDown
-	kill ShootDown
+	kill sputnik.ShootDown
 	// Signalling channel
 	done chan struct{}
 }
 
-func StartRunner(confFolder string, cntr ServerConnector) (*Runner, error) {
+func StartRunner(confFolder string, cntr sputnik.ServerConnector) (*Runner, error) {
 	info, err := prepare(confFolder, cntr)
 	if err != nil {
 		return nil, err
@@ -83,12 +85,12 @@ func (rnr *Runner) Wait() {
 }
 
 type runnerInfo struct {
-	cfact     ConfFactory
-	cnt       ServerConnector
-	appBlocks []BlockDescriptor
+	cfact     sputnik.ConfFactory
+	cnt       sputnik.ServerConnector
+	appBlocks []sputnik.BlockDescriptor
 }
 
-func prepare(confFolder string, cntr ServerConnector) (*runnerInfo, error) {
+func prepare(confFolder string, cntr sputnik.ServerConnector) (*runnerInfo, error) {
 	info, err := os.Stat(confFolder)
 	if err != nil {
 		return nil, err
@@ -110,10 +112,10 @@ func prepare(confFolder string, cntr ServerConnector) (*runnerInfo, error) {
 
 func (rnr *Runner) Start(ri *runnerInfo) error {
 
-	sp, err := NewSputnik(
-		WithAppBlocks(ri.appBlocks),
-		WithConfFactory(ri.cfact),
-		WithConnector(ri.cnt, brokerCheckTimeOut),
+	sp, err := sputnik.NewSputnik(
+		sputnik.WithAppBlocks(ri.appBlocks),
+		sputnik.WithConfFactory(ri.cfact),
+		sputnik.WithConnector(ri.cnt, brokerCheckTimeOut),
 	)
 
 	if err != nil {
@@ -128,7 +130,7 @@ func (rnr *Runner) Start(ri *runnerInfo) error {
 	rnr.kill = kill
 	rnr.done = make(chan struct{})
 
-	go func(l Launch, done chan struct{}) {
+	go func(l sputnik.Launch, done chan struct{}) {
 		l()
 		close(done)
 	}(launch, rnr.done)
@@ -136,7 +138,7 @@ func (rnr *Runner) Start(ri *runnerInfo) error {
 	return nil
 }
 
-func ReadAppBlocks(confFolder string) ([]BlockDescriptor, error) {
+func ReadAppBlocks(confFolder string) ([]sputnik.BlockDescriptor, error) {
 	fPath := filepath.Join(confFolder, "blocks.json")
 
 	blocksRaw, err := os.ReadFile(fPath)
@@ -144,7 +146,7 @@ func ReadAppBlocks(confFolder string) ([]BlockDescriptor, error) {
 		return nil, err
 	}
 
-	var result []BlockDescriptor
+	var result []sputnik.BlockDescriptor
 
 	json.Unmarshal([]byte(blocksRaw), &result)
 

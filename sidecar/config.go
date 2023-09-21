@@ -1,4 +1,4 @@
-package sputnik
+package sidecar
 
 import (
 	"os"
@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/g41797/gonfig"
+	"github.com/g41797/sputnik"
 )
 
 // ConfigFactory returns implementation of sputnik.ConfFactory based on github.com/tkanos/gonfig
@@ -14,7 +15,7 @@ import (
 // - Env. variable for configuration "example" and key "kname" should be set in environment as "EXAMPLE_KNAME"
 // - Value in environment automatically overrides value from the file
 // - Temporary used github.com/g41797/gonfig  (till merge of PR)
-func ConfigFactory(cfPath string) ConfFactory {
+func ConfigFactory(cfPath string) sputnik.ConfFactory {
 	cnf := newConfig(cfPath)
 	return cnf.unmarshal
 }
