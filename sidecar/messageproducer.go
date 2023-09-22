@@ -6,7 +6,7 @@ import "github.com/g41797/sputnik"
 // software and external broker process
 type MessageProducer interface {
 	// Connect to the broker
-	Connect(cf sputnik.ConfFactory) error
+	Connect(cf sputnik.ConfFactory, shared sputnik.ServerConnection) error
 
 	// Translate message to format of the broker and send it
 	Produce(msg sputnik.Msg) error
