@@ -11,15 +11,33 @@ import (
 	"github.com/g41797/sputnik"
 )
 
-func Start(cntr sputnik.ServerConnector) {
-
-	var confFolder string
+func ConfFolder() (confFolder string, err error) {
 	flag.StringVar(&confFolder, "cf", "", "Path of folder with config files")
 	flag.Parse()
 
 	if len(confFolder) == 0 {
-		fmt.Fprintln(os.Stderr, fmt.Errorf("-cf <path of config folder> - was not set!!!"))
-		os.Exit(1)
+		err = fmt.Errorf("-cf <path of config folder> - was not set")
+		return "", err
+	}
+
+	info, err := os.Stat(confFolder)
+	if err != nil {
+		return "", err
+	}
+	if !info.IsDir() {
+		return "", fmt.Errorf("%s is not the folder", confFolder)
+	}
+
+	return confFolder, nil
+}
+
+func Start(cntr sputnik.ServerConnector) {
+
+	confFolder, err := ConfFolder()
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
 	}
 
 	rnr, err := StartRunner(confFolder, cntr)
