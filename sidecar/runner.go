@@ -12,8 +12,15 @@ import (
 )
 
 func ConfFolder() (confFolder string, err error) {
-	flag.StringVar(&confFolder, "cf", "", "Path of folder with config files")
-	flag.Parse()
+	fName := "cf"
+
+	fVal := flag.Lookup(fName)
+	if fVal == nil {
+		flag.StringVar(&confFolder, fName, "", "Path of folder with config files")
+		flag.Parse()
+	} else {
+		confFolder = fVal.Value.String()
+	}
 
 	if len(confFolder) == 0 {
 		err = fmt.Errorf("-cf <path of config folder> - was not set")
