@@ -13,7 +13,6 @@ import (
 
 func ConfFolder() (confFolder string, err error) {
 	fName := "cf"
-
 	fVal := flag.Lookup(fName)
 	if fVal == nil {
 		flag.StringVar(&confFolder, fName, "", "Path of folder with config files")
