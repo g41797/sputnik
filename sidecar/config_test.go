@@ -1,12 +1,16 @@
 package sidecar_test
 
 import (
+	"embed"
 	"os"
 	"strconv"
 	"testing"
 
 	"github.com/g41797/sputnik/sidecar"
 )
+
+//go:embed _conf_test
+var cnffiles embed.FS
 
 type TestConf struct {
 	FIRSTSTRING string `mapstructure:"FIRSTSTRING"`
@@ -74,5 +78,30 @@ func compare(t *testing.T, getErr error, actual TestConf, expected TestConf) {
 
 	if actual.SECONDINT != expected.SECONDINT {
 		t.Errorf("Expected %d Actual %d", expected.SECONDINT, actual.SECONDINT)
+	}
+}
+
+func TestUseEmbeddedConfiguration(t *testing.T) {
+	cleanup, err := sidecar.UseEmbeddedConfiguration(&cnffiles)
+	if err != nil {
+		t.Errorf("UseEmbeddedConfiguration error:%v", err)
+		return
+	}
+	defer cleanup()
+
+	dir, err := sidecar.ConfFolder()
+
+	if err != nil {
+		t.Errorf("UseEmbeddedConfiguration error:%v", err)
+		return
+	}
+
+	fileInfo, err := os.Stat(dir)
+	if err != nil {
+		t.Errorf("UseEmbeddedConfiguration error:%v", err)
+	}
+
+	if !fileInfo.IsDir() {
+		t.Errorf("%s is not directory", dir)
 	}
 }

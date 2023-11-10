@@ -2,7 +2,6 @@ package sidecar
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,32 +9,6 @@ import (
 
 	"github.com/g41797/sputnik"
 )
-
-func ConfFolder() (confFolder string, err error) {
-	fName := "cf"
-	fVal := flag.Lookup(fName)
-	if fVal == nil {
-		flag.StringVar(&confFolder, fName, "", "Path of folder with config files")
-		flag.Parse()
-	} else {
-		confFolder = fVal.Value.String()
-	}
-
-	if len(confFolder) == 0 {
-		err = fmt.Errorf("-cf <path of config folder> - was not set")
-		return "", err
-	}
-
-	info, err := os.Stat(confFolder)
-	if err != nil {
-		return "", err
-	}
-	if !info.IsDir() {
-		return "", fmt.Errorf("%s is not the folder", confFolder)
-	}
-
-	return confFolder, nil
-}
 
 func Start(cntr sputnik.ServerConnector) {
 
