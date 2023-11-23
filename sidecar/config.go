@@ -90,15 +90,14 @@ func ConfFolder() (confFolder string, err error) {
 // go:embed configdir
 // var cnffiles embed.FS
 //
-// func main() {
-// 	cleanup, err := sidecar.UseEmbeddedConfiguration(&cnffiles)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer cleanup()
-// 	sidecar.Start(new(adapter.BrokerConnector))
-// }
-
+//	func main() {
+//		cleanup, err := sidecar.UseEmbeddedConfiguration(&cnffiles)
+//		if err != nil {
+//			return err
+//		}
+//		defer cleanup()
+//		sidecar.Start(new(adapter.BrokerConnector))
+//	}
 func UseEmbeddedConfiguration(efs *embed.FS) (cleanUp func(), err error) {
 
 	tmpDir, err := os.MkdirTemp("", "config")

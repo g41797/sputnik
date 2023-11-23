@@ -1,3 +1,5 @@
+github.com/g41797/godotenv v1.5.3 h1:/36/ofF29iNsZBvSS+L/yZk9Nw1SBULvbrV/tG17JMw=
+github.com/g41797/godotenv v1.5.3/go.mod h1:0l6Y57HWL8UW+JO772pthnF0QCvi9zlJigl/JW7ug9Q=
 github.com/g41797/gonfig v1.0.1 h1:ywgkhF3SbNJuFN9Hlm9n7Lp+KxqeupkNmFObn2ZpWs8=
 github.com/g41797/gonfig v1.0.1/go.mod h1:5iL4oHFpYi+c7AE4D1dZnlBleJzM71dX6HZBhEELF90=
 github.com/g41797/kissngoqueue v0.1.5 h1:UrnpxbjOnTnKj/EqpbLA9LjhYkHjnLWMZQqsz3AOBG8=
