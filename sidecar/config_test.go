@@ -81,7 +81,7 @@ func compare(t *testing.T, getErr error, actual TestConf, expected TestConf) {
 	}
 }
 
-func TestUseEmbeddedConfiguration(t *testing.T) {
+func TestUseTemporaryFolderForConfiguration(t *testing.T) {
 	cleanup, err := sidecar.UseEmbeddedConfiguration(&cnffiles)
 	if err != nil {
 		t.Errorf("UseEmbeddedConfiguration error:%v", err)
@@ -104,4 +104,12 @@ func TestUseEmbeddedConfiguration(t *testing.T) {
 	if !fileInfo.IsDir() {
 		t.Errorf("%s is not directory", dir)
 	}
+
+	url := "https://memphisdev.github.io/memphis-docker/docker-compose-dev.yml"
+
+	err = sidecar.LoadDockerComposeFile("https://memphisdev.github.io/memphis-docker/docker-compose-dev.yml")
+	if err != nil {
+		t.Errorf("LoadDockerComposeFile from %s error:%v", url, err)
+	}
+
 }
